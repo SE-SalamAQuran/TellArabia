@@ -8,7 +8,6 @@ const uri = process.env.MONGO_URI;
 const port = process.env.PORT;
 
 const app = express();
-
 // const customerRoutes = require("./routes/customer.routes");
 // const businessRoutes = require("./routes/business.routes");
 
@@ -54,7 +53,6 @@ app.use(express.json({
 // app.use('/student', customerRoutes);
 // app.use('/business', businessRoutes);
 app.use('/auth', authRoutes);
-
 
 
 app.listen(port, () => {

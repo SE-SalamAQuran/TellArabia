@@ -23,6 +23,11 @@ const studentSchema = new Schema({
         type: String,
         required: true,
     },
+    orders: {
+        type: [mongoose.Types.ObjectId],
+        ref: 'Order',
+        default: [],
+    },
     userInfo: {
         type: mongoose.Types.ObjectId,
         ref: 'User',

@@ -86,9 +86,9 @@ module.exports = {
 
     },
     login: async (req, res) => {
-        const { email, password } = req.body;
+        const { phone, password } = req.body;
 
-        User.findOne({ email: email }, (err, user) => {
+        User.findOne({ 'phone.number': phone }, (err, user) => {
             if (err) res.status(404).json({ "Status": "Error", "Message": "User not found" });
             else if (user) {
                 bcrypt.compare(password, user.password, function (error, passMatch) {
@@ -131,12 +131,16 @@ module.exports = {
         token = req.headers['authorization'];
         let decoded = jwt.verify(token, secretKey);
         const client = decoded.user;
-        if (newPassword === passConfirmation && newPassword != "") {
+        if (newPassword === passConfirmation && newPassword != "" && decoded.user != null) {
             bcrypt.hash(newPassword, 10, async (err, hash) => {
                 if (err) { console.log(err); return res.status(400).json({ "Status": "failed", "Message": "User not found" }); }
                 User.findOneAndUpdate({ _id: client._id }, { password: hash }, (error, result) => {
                     if (error) { console.log(error); return res.status(400).json({ "Status": "failed", "Message": "Unable to update password" }); }
-                    return res.status(202).json({ "Status": "Success", "Message": "User password updated", "Result": result });
+                    else if (result) {
+                        return res.status(202).json({ "Status": "Success", "Message": "User password updated", "Result": result });
+                    } else {
+                        return res.status(403).json({ "Status": "Failed", "Message": "Invalid bearer token" });
+                    }
                 })
             })
 
