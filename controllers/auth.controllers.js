@@ -129,24 +129,28 @@ module.exports = {
     changePassword: async (req, res, next) => {
         const { newPassword, passConfirmation } = req.body;
         token = req.headers['authorization'];
-        let decoded = jwt.verify(token, secretKey);
-        const client = decoded.user;
-        if (newPassword === passConfirmation && newPassword != "" && decoded.user != null) {
-            bcrypt.hash(newPassword, 10, async (err, hash) => {
-                if (err) { console.log(err); return res.status(400).json({ "Status": "failed", "Message": "User not found" }); }
-                User.findOneAndUpdate({ _id: client._id }, { password: hash }, (error, result) => {
-                    if (error) { console.log(error); return res.status(400).json({ "Status": "failed", "Message": "Unable to update password" }); }
-                    else if (result) {
-                        return res.status(202).json({ "Status": "Success", "Message": "User password updated", "Result": result });
-                    } else {
-                        return res.status(403).json({ "Status": "Failed", "Message": "Invalid bearer token" });
-                    }
+        jwt.verify(token, secretKey, function (e, decoded) {
+            if (e) {
+                return res.status(403).json({ "Status": "Failed", "Message": "Invalid bearer token" });
+            }
+            const client = decoded.user;
+            if (newPassword === passConfirmation && newPassword != "" && decoded.user != null) {
+                bcrypt.hash(newPassword, 10, async (err, hash) => {
+                    if (err) { console.log(err); return res.status(400).json({ "Status": "failed", "Message": "User not found" }); }
+                    User.findOneAndUpdate({ _id: client._id }, { password: hash }, (error, result) => {
+                        if (error) { console.log(error); return res.status(400).json({ "Status": "failed", "Message": "Unable to update password" }); }
+                        else if (result) {
+                            return res.status(202).json({ "Status": "Success", "Message": "User password updated", "Result": result });
+                        }
+                    })
                 })
-            })
 
-        } else {
-            res.status(400).json({ "Status": "Failed", "Message": "Password cannot be empty" });
-        }
+            } else {
+                res.status(400).json({ "Status": "Failed", "Message": "Password cannot be empty" });
+            }
+
+        });
+
 
     }
 }

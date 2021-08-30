@@ -4,13 +4,14 @@ const morgan = require("morgan");
 const dotenv = require('dotenv').config({});
 const mongoose = require("mongoose");
 
+
 const uri = process.env.MONGO_URI;
 const port = process.env.PORT;
 
 const app = express();
 // const customerRoutes = require("./routes/customer.routes");
 // const businessRoutes = require("./routes/business.routes");
-
+const uploadRoutes = require("./routes/upload.routes");
 const authRoutes = require('./routes/auth.routes');
 
 // DB connection
@@ -20,8 +21,14 @@ mongoose.connect(uri, {
 });
 
 const connection = mongoose.connection;
+let gfs;
 connection.on('open', () => {
+
     console.log("Connected to DB!");
+
+    gfs = new mongoose.mongo.GridFSBucket(connection.db, {
+        bucketName: 'orders_uploads'
+    })
 });
 
 connection.on('error', (err) => {
@@ -53,7 +60,7 @@ app.use(express.json({
 // app.use('/student', customerRoutes);
 // app.use('/business', businessRoutes);
 app.use('/auth', authRoutes);
-
+app.use('/upload', uploadRoutes);
 
 app.listen(port, () => {
     console.log(`Server Up on Port ${port}`);
