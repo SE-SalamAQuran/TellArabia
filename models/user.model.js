@@ -62,6 +62,11 @@ const userSchema = new Schema({
         default: 0,
 
     },
+    orders: {
+        type: [mongoose.Types.ObjectId],
+        ref: 'Order',
+        default: [],
+    },
     user_type: {
         type: Number,
         enum: [0, 1], // 0: student, 1: business

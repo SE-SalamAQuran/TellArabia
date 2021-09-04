@@ -72,11 +72,6 @@ const businessSchema = new Schema({
 
 
     },
-    orders: {
-        type: [mongoose.Types.ObjectId],
-        ref: 'Order',
-        default: [],
-    },
 
     industry: { //Business type
         type: String,

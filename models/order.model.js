@@ -27,13 +27,17 @@ const orderSchema = new Schema({
         type: String,
         required: true,
     },
-    attachments: {
-        type: [String], //Array of attachments' URLs
-        required: true,
-        maxlength: 6
+    status: {
+        type: String,
+        enum: ["Pending", "In progress", "Removed", "Complete"],
+        default: "Pending",
     },
+    attachments: [{
+        type: String, //Array of attachments' URLs
+        required: true,
+    }],
     deadline: {
-        type: Date,
+        type: String,
         required: true,
     }
 
