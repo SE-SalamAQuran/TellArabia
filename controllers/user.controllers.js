@@ -1,5 +1,6 @@
 const User = require("../models/user.model");
 const Order = require("../models/order.model");
+Meeting = require("../models/meeting.model");
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv").config({});
 const secretKey = process.env.JWT_SECRET;
@@ -31,5 +32,6 @@ module.exports = {
                 return res.status(200).json({ "success": true, "result": orders });
             })
         })
-    }
+    },
+
 }

@@ -66,6 +66,16 @@ const userSchema = new Schema({
         ref: 'Order',
         default: [],
     },
+    meetings: {
+        type: [mongoose.Types.ObjectId],
+        ref: 'Meeting',
+        default: [],
+    },
+    complaints: {
+        type: [mongoose.Types.ObjectId],
+        ref: 'Complaint',
+        default: [],
+    },
     user_type: {
         type: Number,
         enum: [0, 1], // 0: student, 1: business

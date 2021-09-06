@@ -11,14 +11,14 @@ const fs = require('fs');
 const uri = process.env.MONGO_URI;
 const port = process.env.PORT;
 const secretKey = process.env.JWT_SECRET;
-
+const User = require("./models/user.model");
 const app = express();
 const userRoutes = require("./routes/user.routes");
-// const businessRoutes = require("./routes/business.routes");
+const meetingRoutes = require("./routes/meeting.routes");
 // const uploadRoutes = require("./routes/upload.routes");
 const authRoutes = require('./routes/auth.routes');
 const { MulterError } = require('multer');
-const User = require("./models/user.model");
+
 
 // DB connection
 mongoose.connect(uri, {
@@ -63,7 +63,7 @@ app.use(multer({ dest: "./uploads" }).array('files', 6));
 app.use(express.static(path.join(__dirname, "./uploads")));
 
 // app.use('/student', customerRoutes);
-// app.use('/business', businessRoutes);
+app.use('/meetings', meetingRoutes);
 app.use('/auth', authRoutes);
 app.use('/users', userRoutes);
 
