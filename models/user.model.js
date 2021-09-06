@@ -20,7 +20,6 @@ const userSchema = new Schema({
         },
     },
     phone: {
-
         countryCode: {
             type: String,
             required: true,
@@ -70,6 +69,14 @@ const userSchema = new Schema({
     user_type: {
         type: Number,
         enum: [0, 1], // 0: student, 1: business
+    },
+    is_active: {
+        type: Boolean,
+        default: false,
+    },
+    is_admin: {
+        type: Boolean,
+        default: false
     }
 
 }, { timestamps: true })

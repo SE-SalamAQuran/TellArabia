@@ -13,11 +13,12 @@ const port = process.env.PORT;
 const secretKey = process.env.JWT_SECRET;
 
 const app = express();
-// const customerRoutes = require("./routes/customer.routes");
+const userRoutes = require("./routes/user.routes");
 // const businessRoutes = require("./routes/business.routes");
 // const uploadRoutes = require("./routes/upload.routes");
 const authRoutes = require('./routes/auth.routes');
 const { MulterError } = require('multer');
+const User = require("./models/user.model");
 
 // DB connection
 mongoose.connect(uri, {
@@ -64,6 +65,7 @@ app.use(express.static(path.join(__dirname, "./uploads")));
 // app.use('/student', customerRoutes);
 // app.use('/business', businessRoutes);
 app.use('/auth', authRoutes);
+app.use('/users', userRoutes);
 
 app.post('/orders/new', async (req, res) => {
     t = req.headers['authorization'];
@@ -91,10 +93,15 @@ app.post('/orders/new', async (req, res) => {
 
         await newOrder.save()
             .then((order) => {
+                User.findOneAndUpdate({ _id: decoded.user._id }, { $push: { orders: order } }).exec(function (e, result) {
+                    if (e) return res.status(400).json({ "success": false, "message": "Unable to add order to user" });
+                    console.log(result);
+                })
                 return res.status(201).json({ "success": true, "message": "Successful order upload", "result": "Succeded", "user": decoded.user, "order": order });
             }).catch((e) => {
                 return res.status(400).json({ "success": false, "message": "Unsuccessful order upload", "result": "Failure", "user": decoded.user, "error": e });
             });
+
     })
 
 })
