@@ -10,16 +10,9 @@ const businessSchema = new Schema({
     },
 
     telephone: {
-        countryCode: {
-            type: String,
-            required: true,
-        },
-        number: {
-            type: String,
-            unique: true,
-            minlength: 8,
-            required: true,
-        },
+        type: String,
+        unique: true,
+        required: true,
     },
     crn: { //Company registration number
         type: String,
@@ -29,16 +22,9 @@ const businessSchema = new Schema({
     },
 
     fax: {
-        countryCode: {
-            type: String,
-            required: true,
-        },
-        number: {
-            type: String,
-            unique: true,
-            minlength: 8,
-            required: true,
-        },
+        type: String,
+        unique: true,
+        required: true,
 
     },
     language: {

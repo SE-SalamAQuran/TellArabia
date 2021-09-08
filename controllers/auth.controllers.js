@@ -21,6 +21,18 @@ function isPhoneNumber(inputtxt) {
     return result;
 }
 
+function isTelephone(inputtxt) {
+    var phoneno = /^\+?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{5})$/;
+    var result = false;
+    if ((inputtxt.match(phoneno))) {
+        result = true;
+    }
+    else {
+        result = false;
+    }
+    return result;
+}
+
 module.exports = {
     registerUser: async (req, res) => {
         const { name, email, phone, city, country, address, password, passConfirmation, user_type } = req.body;
@@ -69,6 +81,11 @@ module.exports = {
                         user_type: user_type,
                     })
                     const { telephone, crn, fax, language, socialMediaURLs, industry } = req.body;
+                    if (!isTelephone(fax)) {
+                        return res.status(400).json({ "success": false, "message": "Invalid fax number" });
+                    } else if (!isTelephone(telephone)) {
+                        return res.status(400).json({ "success": false, "message": "Invalid telephone number" });
+                    }
 
                     await user.save()
                         .then((user) => {
