@@ -9,10 +9,22 @@ const dotenv = require("dotenv").config({});
 const secretKey = process.env.JWT_SECRET;
 var refreshTokens = {};
 
+function isPhoneNumber(inputtxt) {
+    var phoneno = /^\+?([0-9]{3})\)?[-. ]?([0-9]{4})[-. ]?([0-9]{5})$/;
+    var result = false;
+    if ((inputtxt.match(phoneno))) {
+        result = true;
+    }
+    else {
+        result = false;
+    }
+    return result;
+}
+
 module.exports = {
     registerUser: async (req, res) => {
         const { name, email, phone, city, country, address, password, passConfirmation, user_type } = req.body;
-        if (password === passConfirmation && password.length >= 8) {
+        if (password === passConfirmation && password.length >= 8 && isPhoneNumber(phone)) {
             bcrypt.hash(password, 10, async (err, hash) => {
                 if (err) {
                     res.status(400).send(err);
@@ -81,6 +93,8 @@ module.exports = {
 
         } else if (password.length < 8) {
             return res.status(400).json({ "success": false, "message": "password length can't be less than 8" });
+        } else if (!isPhoneNumber(phone)) {
+            return res.status(400).json({ "success": false, "message": "phone number is invalid" });
         }
         else {
             res.status(400).json({ "success": false, "message": "Passwords don't match" });
@@ -91,7 +105,7 @@ module.exports = {
         const { phone, password } = req.body;
 
 
-        User.findOne({ $and: [{ 'phone.countryCode': phone.countryCode }, { 'phone.number': phone.number }] }, (err, user) => {
+        User.findOne({ phone: phone }, (err, user) => {
             if (err) res.status(404).json({ "success": false, "message": "User not found" });
             else if (user) {
                 bcrypt.compare(password, user.password, function (error, passMatch) {

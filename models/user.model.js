@@ -20,21 +20,9 @@ const userSchema = new Schema({
         },
     },
     phone: {
-        countryCode: {
-            type: String,
-            required: true,
-        },
-        number: {
-            type: String,
-            unique: true,
-            required: true,
-            validate(value) {
-                if (!validator.isMobilePhone(value)) {
-                    throw new Error("Phone number is invalid");
-                }
-            },
-        },
-
+        type: String,
+        unique: true,
+        required: true,
     },
     password: {
         type: String,
