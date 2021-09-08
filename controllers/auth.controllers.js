@@ -12,7 +12,7 @@ var refreshTokens = {};
 module.exports = {
     registerUser: async (req, res) => {
         const { name, email, phone, city, country, address, password, passConfirmation, user_type } = req.body;
-        if (password === passConfirmation) {
+        if (password === passConfirmation && password.length >= 8) {
             bcrypt.hash(password, 10, async (err, hash) => {
                 if (err) {
                     res.status(400).send(err);
@@ -79,6 +79,8 @@ module.exports = {
                 }
             })
 
+        } else if (password.length < 8) {
+            return res.status(400).json({ "success": false, "message": "password length can't be less than 8" });
         }
         else {
             res.status(400).json({ "success": false, "message": "Passwords don't match" });
@@ -137,7 +139,7 @@ module.exports = {
                 return res.status(403).json({ "success": false, "message": "Invalid bearer token" });
             }
             const client = decoded.user;
-            if (newPassword === passConfirmation && newPassword != "" && decoded.user != null) {
+            if (newPassword === passConfirmation && newPassword != "" && decoded.user != null && newPassword.length >= 8) {
                 bcrypt.hash(newPassword, 10, async (err, hash) => {
                     if (err) { console.log(err); return res.status(400).json({ "success": false, "message": "User not found" }); }
                     User.findOneAndUpdate({ _id: client._id }, { password: hash }, (error, result) => {
@@ -148,7 +150,10 @@ module.exports = {
                     })
                 })
 
-            } else {
+            } else if (newPassword.length < 8) {
+                return res.status(400).json({ "success": false, "message": "password length must be more than 8" })
+            }
+            else {
                 res.status(400).json({ "success": false, "message": "Password cannot be empty" });
             }
 
