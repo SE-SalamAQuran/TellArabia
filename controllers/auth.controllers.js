@@ -70,29 +70,30 @@ module.exports = {
                                 industry: industry,
                                 userInfo: user._id,
                             })
-                            business.save().then(() => { return res.status(200).send(business) }).catch((error) => { return res.status(400).json({ "Status": "Error", "Message": "Business already exists" }) });
+                            business.save().then(() => { return res.status(200).send(business) }).catch((error) => { return res.status(400).json({ "success": false, "message": "Business already exists" }) });
 
                         })
-                        .catch((err) => { res.status(400).json({ "Status": "Failed", "Message": "Error adding user" }) });
+                        .catch((err) => { res.status(400).json({ "success": false, "message": "Error adding user" }) });
                 } else {
-                    res.status(400).json({ "Status": "Failure", "Message": "Invalid user type" });
+                    res.status(400).json({ "success": false, "message": "Invalid user type" });
                 }
             })
 
         }
         else {
-            res.status(400).json({ "Status": "Error", "Message": "Passwords don't match" });
+            res.status(400).json({ "success": false, "message": "Passwords don't match" });
         }
 
     },
     login: async (req, res) => {
         const { phone, password } = req.body;
 
-        User.findOne({ 'phone.number': phone }, (err, user) => {
-            if (err) res.status(404).json({ "Status": "Error", "Message": "User not found" });
+
+        User.findOne({ $and: [{ 'phone.countryCode': phone.countryCode }, { 'phone.number': phone.number }] }, (err, user) => {
+            if (err) res.status(404).json({ "success": false, "message": "User not found" });
             else if (user) {
                 bcrypt.compare(password, user.password, function (error, passMatch) {
-                    if (error) res.status(401).json({ "Status": "Error", "Message": "Password is incorrect" });
+                    if (error) res.status(401).json({ "success": false, "message": "Password is incorrect" });
                     else if (passMatch) {
                         let jwtData = {
                             _id: user["_id"],
@@ -117,40 +118,48 @@ module.exports = {
                             currentUser: client
                         });
                     } else {
-                        res.status(401).json({ "Status": "Failed", "Message": "Invalid credentials" });
+                        res.status(401).json({ "success": false, "message": "Invalid credentials" });
                     }
                 })
             }
             else {
-                res.status(401).json({ "Status": "Failure", "Message": "User not found" })
+                res.status(401).json({ "success": false, "message": "User not found" })
             }
         })
+
+
     },
     changePassword: async (req, res, next) => {
         const { newPassword, passConfirmation } = req.body;
         token = req.headers['authorization'];
         jwt.verify(token, secretKey, function (e, decoded) {
             if (e) {
-                return res.status(403).json({ "Status": "Failed", "Message": "Invalid bearer token" });
+                return res.status(403).json({ "success": false, "message": "Invalid bearer token" });
             }
             const client = decoded.user;
             if (newPassword === passConfirmation && newPassword != "" && decoded.user != null) {
                 bcrypt.hash(newPassword, 10, async (err, hash) => {
-                    if (err) { console.log(err); return res.status(400).json({ "Status": "failed", "Message": "User not found" }); }
+                    if (err) { console.log(err); return res.status(400).json({ "success": false, "message": "User not found" }); }
                     User.findOneAndUpdate({ _id: client._id }, { password: hash }, (error, result) => {
-                        if (error) { console.log(error); return res.status(400).json({ "Status": "failed", "Message": "Unable to update password" }); }
+                        if (error) { console.log(error); return res.status(400).json({ "success": false, "message": "Unable to update password" }); }
                         else if (result) {
-                            return res.status(202).json({ "Status": "Success", "Message": "User password updated", "Result": result });
+                            return res.status(202).json({ "success": true, "message": "User password updated", "result": result });
                         }
                     })
                 })
 
             } else {
-                res.status(400).json({ "Status": "Failed", "Message": "Password cannot be empty" });
+                res.status(400).json({ "success": false, "message": "Password cannot be empty" });
             }
 
         });
-
-
+    },
+    getCurrentUser: async (req, res) => {
+        const token = req.headers['authorization'];
+        jwt.verify(token, secretKey, (err, decoded) => {
+            if (err) return res.status(403).json({ "success": false, "message": "Unauthorized, invalid token" });
+            console.log(decoded);
+            return res.status(200).json({ "success": true, "message": "Successful user retrieve", "result": decoded.user });
+        })
     }
 }
