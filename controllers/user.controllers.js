@@ -36,9 +36,9 @@ module.exports = {
     findUser: async (req, res) => {
         const phone = req.body.phone;
         User.findOne({ phone: phone }, (err, user) => {
-            if (err || !user) { return res.status(404).json({ "found": false }); }
+            if (err || !user) { return res.status(200).json({ "found": false }); }
             else {
-                return res.status(200).json({ "found": true });
+                return res.status(400).json({ "found": true });
 
             }
         });
