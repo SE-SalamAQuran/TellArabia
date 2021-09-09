@@ -64,7 +64,31 @@ module.exports = {
                                 country: country,
                                 userInfo: user._id,
                             })
-                            student.save().then(res.status(200).send(student)).catch((err) => { return res.status(400).json({ "Status": "failed", "Message": "Student already exists" }) });
+                            student.save().then(() => {
+
+                                let jwtData = {
+                                    _id: user["_id"],
+                                    phone: user["phone"],
+                                    user_type: user["user_type"],
+                                    name: user["name"],
+                                    city: user["city"],
+                                    country: user["country"],
+                                    address: user["address"],
+                                    zipCode: user["zipCode"],
+                                };
+                                var token = jwt.sign({
+                                    user: jwtData
+                                }, secretKey);
+                                var refreshToken = randToken.uid(256);
+                                refreshTokens[refreshToken] = user["_id"];
+                                let decoded = jwt.verify(token, secretKey);
+                                const client = decoded.user;
+                                res.status(200).json({
+                                    token: token,
+                                    refresh: refreshToken,
+                                    currentUser: client
+                                });
+                            }).catch((err) => { return res.status(400).json({ "Status": "failed", "Message": "Student already exists" }) });
                         })
                         .catch((error) => { res.status(400).json({ "Status": "Error", "Message": "Error adding user" }) });
 
@@ -99,7 +123,30 @@ module.exports = {
                                 industry: industry,
                                 userInfo: user._id,
                             })
-                            business.save().then(() => { return res.status(200).send(business) }).catch((error) => { return res.status(400).json({ "success": false, "message": "Business already exists" }) });
+                            business.save().then(() => {
+                                let jwtData = {
+                                    _id: user["_id"],
+                                    phone: user["phone"],
+                                    user_type: user["user_type"],
+                                    name: user["name"],
+                                    city: user["city"],
+                                    country: user["country"],
+                                    address: user["address"],
+                                    zipCode: user["zipCode"],
+                                };
+                                var token = jwt.sign({
+                                    user: jwtData
+                                }, secretKey);
+                                var refreshToken = randToken.uid(256);
+                                refreshTokens[refreshToken] = user["_id"];
+                                let decoded = jwt.verify(token, secretKey);
+                                const client = decoded.user;
+                                res.status(200).json({
+                                    token: token,
+                                    refresh: refreshToken,
+                                    currentUser: client
+                                });
+                            }).catch((error) => { return res.status(400).json({ "success": false, "message": "Business already exists" }) });
 
                         })
                         .catch((err) => { res.status(400).json({ "success": false, "message": "Error adding user" }) });
@@ -120,8 +167,6 @@ module.exports = {
     },
     login: async (req, res) => {
         const { phone, password } = req.body;
-
-
         User.findOne({ phone: phone }, (err, user) => {
             if (err) res.status(404).json({ "success": false, "message": "User not found" });
             else if (user) {
