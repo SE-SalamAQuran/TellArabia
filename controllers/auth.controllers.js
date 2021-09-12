@@ -90,7 +90,7 @@ module.exports = {
                                 });
                             }).catch((err) => { return res.status(400).json({ "Status": "failed", "Message": "Student already exists" }) });
                         })
-                        .catch((error) => { res.status(400).json({ "Status": "Error", "Message": "Error adding user" }) });
+                        .catch((error) => { res.status(400).json({ "Status": "Error", "Message": "User already exists" }) });
 
                 } else if (user_type === 1) {
                     const user = new User({
@@ -149,7 +149,7 @@ module.exports = {
                             }).catch((error) => { return res.status(400).json({ "success": false, "message": "Business already exists" }) });
 
                         })
-                        .catch((err) => { res.status(400).json({ "success": false, "message": "Error adding user" }) });
+                        .catch((err) => { res.status(400).json({ "success": false, "message": "User already exists" }) });
                 } else {
                     res.status(400).json({ "success": false, "message": "Invalid user type" });
                 }
