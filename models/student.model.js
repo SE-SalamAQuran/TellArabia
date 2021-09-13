@@ -21,7 +21,7 @@ const studentSchema = new Schema({
     },
     language: {
         type: String,
-        required: true,
+        default: ""
     },
 
     userInfo: {

@@ -29,7 +29,7 @@ const businessSchema = new Schema({
     },
     language: {
         type: String,
-        required: true,
+        default: ""
     },
     socialMediaURLs: {
         facebook: {

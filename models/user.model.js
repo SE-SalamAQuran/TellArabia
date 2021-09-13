@@ -8,17 +8,7 @@ const userSchema = new Schema({
         required: true,
         maxlength: 25
     },
-    email: {
-        type: String,
-        unique: true,
-        required: true,
-        minlength: 10,
-        validate(value) {
-            if (!validator.isEmail(value)) {
-                throw new Error("Email is invalid");
-            }
-        },
-    },
+
     phone: {
         type: String,
         unique: true,
@@ -41,7 +31,7 @@ const userSchema = new Schema({
     },
     address: {
         type: String,
-        required: true,
+        default: ""
     },
     zipCode: {
         type: String,

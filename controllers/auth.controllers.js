@@ -35,7 +35,7 @@ function isTelephone(inputtxt) {
 
 module.exports = {
     registerUser: async (req, res) => {
-        const { name, email, phone, city, country, address, password, passConfirmation, user_type } = req.body;
+        const { name, phone, city, country, address, password, passConfirmation, user_type } = req.body;
         if (password === passConfirmation && password.length >= 8 && isPhoneNumber(phone)) {
             bcrypt.hash(password, 10, async (err, hash) => {
                 if (err) {
@@ -45,11 +45,10 @@ module.exports = {
                         phone: phone,
                         name: name,
                         password: hash,
-                        email: email,
+
                         city: city,
                         address: address,
                         country: country,
-                        email: email,
                         user_type: user_type,
                     })
                     const { university, major, degree, language } = req.body;
@@ -97,11 +96,9 @@ module.exports = {
                         phone: phone,
                         name: name,
                         password: hash,
-                        email: email,
                         city: city,
                         address: address,
                         country: country,
-                        email: email,
                         user_type: user_type,
                     })
                     const { telephone, crn, fax, language, socialMediaURLs, industry } = req.body;
@@ -149,7 +146,7 @@ module.exports = {
                             }).catch((error) => { return res.status(400).json({ "success": false, "message": "Business already exists" }) });
 
                         })
-                        .catch((err) => { res.status(400).json({ "success": false, "message": "User already exists" }) });
+                        .catch((err) => { res.status(400).json({ "success": false, "message": "User already exists", "ERR": err }) });
                 } else {
                     res.status(400).json({ "success": false, "message": "Invalid user type" });
                 }
