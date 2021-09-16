@@ -87,9 +87,9 @@ module.exports = {
                                 };
                                 var token = jwt.sign({
                                     user: jwtData
-                                }, secretKey, { expiresIn: '24h' });
+                                }, secretKey, { expiresIn: '14d' });
                                 var refreshToken = randToken.uid(256);
-                                refreshTokens[refreshToken] = user["_id"];
+                                refreshTokens[refreshToken] = user["phone"];
                                 let decoded = jwt.verify(token, secretKey);
                                 const client = decoded.user;
                                 res.status(200).json({
@@ -143,9 +143,9 @@ module.exports = {
                                 };
                                 var token = jwt.sign({
                                     user: jwtData
-                                }, secretKey, { expiresIn: '24h' });
+                                }, secretKey, { expiresIn: '14d' });
                                 var refreshToken = randToken.uid(256);
-                                refreshTokens[refreshToken] = user["_id"];
+                                refreshTokens[refreshToken] = user["phone"];
                                 let decoded = jwt.verify(token, secretKey);
                                 const client = decoded.user;
                                 res.status(200).json({
@@ -192,9 +192,9 @@ module.exports = {
                         };
                         var token = jwt.sign({
                             user: jwtData
-                        }, secretKey, { expiresIn: '24h' });
+                        }, secretKey, { expiresIn: '14d' });
                         var refreshToken = randToken.uid(256);
-                        refreshTokens[refreshToken] = user["_id"];
+                        refreshTokens[refreshToken] = user["phone"];
                         let decoded = jwt.verify(token, secretKey);
                         const client = decoded.user;
                         res.status(200).json({
@@ -247,5 +247,41 @@ module.exports = {
             console.log(decoded);
             return res.status(200).json({ "success": true, "message": "Successful user retrieve", "result": decoded.user });
         })
+    },
+    getNewToken: async (req, res) => {
+        const refresh = req.body.refresh;
+        const phone = req.body.phone;
+        if ((refresh in refreshTokens) && (refreshTokens[refresh] == phone)) {
+            User.findOne({ 'phone': phone }).exec(function (err, user) {
+                if (err) {
+                    return res.status(404).json({ "success": false, "message": "User not found" });
+                }
+                var data = {
+                    phone: user["phone"],
+                    _id: user["_id"],
+                    user_type: user["user_type"],
+                    name: user["name"],
+                    city: user["city"],
+                    country: user["country"],
+                    address: user["address"],
+                    zipCode: user["zipCode"],
+                }
+                var token = jwt.sign({
+                    user: data
+                }, secretKey, { expiresIn: '14d' });
+                var refreshToken = randToken.uid(256);
+                refreshTokens[refreshToken] = user["phone"];
+                let decoded = jwt.verify(token, secretKey);
+                const client = decoded.user;
+                res.status(200).json({
+                    token: token,
+                    refresh: refreshToken,
+                    currentUser: client
+                });
+            })
+
+        } else {
+            return res.status(403).json({ "success": false, "message": "Invalid refresh token" });
+        }
     }
 }
