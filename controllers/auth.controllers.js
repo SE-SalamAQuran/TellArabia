@@ -9,6 +9,16 @@ const dotenv = require("dotenv").config({});
 const secretKey = process.env.JWT_SECRET;
 var refreshTokens = {};
 
+function isTokenExpired(token) {
+    const payloadBase64 = token.split('.')[1];
+    const decodedJson = Buffer.from(payloadBase64, 'base64').toString();
+    const decoded = JSON.parse(decodedJson)
+    const exp = decoded.exp;
+    const expired = (Date.now() >= exp * 1000)
+    return expired
+}
+
+
 function isPhoneNumber(inputtxt) {
     var phoneno = /^\+?([0-9]{3})\)?[-. ]?([0-9]{4})[-. ]?([0-9]{5})$/;
     var result = false;
@@ -77,7 +87,7 @@ module.exports = {
                                 };
                                 var token = jwt.sign({
                                     user: jwtData
-                                }, secretKey);
+                                }, secretKey, { expiresIn: '24h' });
                                 var refreshToken = randToken.uid(256);
                                 refreshTokens[refreshToken] = user["_id"];
                                 let decoded = jwt.verify(token, secretKey);
@@ -133,7 +143,7 @@ module.exports = {
                                 };
                                 var token = jwt.sign({
                                     user: jwtData
-                                }, secretKey);
+                                }, secretKey, { expiresIn: '24h' });
                                 var refreshToken = randToken.uid(256);
                                 refreshTokens[refreshToken] = user["_id"];
                                 let decoded = jwt.verify(token, secretKey);
@@ -169,7 +179,7 @@ module.exports = {
             else if (user) {
                 bcrypt.compare(password, user.password, function (error, passMatch) {
                     if (error) res.status(401).json({ "success": false, "message": "Password is incorrect" });
-                    else if (passMatch) {
+                    else {
                         let jwtData = {
                             _id: user["_id"],
                             phone: user["phone"],
@@ -182,7 +192,7 @@ module.exports = {
                         };
                         var token = jwt.sign({
                             user: jwtData
-                        }, secretKey);
+                        }, secretKey, { expiresIn: '24h' });
                         var refreshToken = randToken.uid(256);
                         refreshTokens[refreshToken] = user["_id"];
                         let decoded = jwt.verify(token, secretKey);
@@ -192,8 +202,6 @@ module.exports = {
                             refresh: refreshToken,
                             currentUser: client
                         });
-                    } else {
-                        res.status(401).json({ "success": false, "message": "Invalid credentials" });
                     }
                 })
             }
@@ -229,8 +237,8 @@ module.exports = {
             else {
                 res.status(400).json({ "success": false, "message": "Password cannot be empty" });
             }
-
         });
+        console.log("Expired? ==> ", isTokenExpired(token));
     },
     getCurrentUser: async (req, res) => {
         const token = req.headers['authorization'];
