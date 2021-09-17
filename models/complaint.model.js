@@ -14,7 +14,11 @@ const complaintSchema = new Schema({
         type: String,
         required: true,
     },
+    user: {
+        type: mongoose.Types.ObjectId,
+        ref: 'User'
+    }
 
 }, { timestamps: true });
 
-module.exports = mongoose.model("Meeting", meetingSchema);
+module.exports = mongoose.model("Complaint", complaintSchema);

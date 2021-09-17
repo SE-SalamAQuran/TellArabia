@@ -22,13 +22,12 @@ module.exports = {
                 .then((meeting) => {
                     User.findOneAndUpdate({ _id: decoded.user._id }, { $push: { meetings: meeting } }).exec(function (e, result) {
                         if (e) return res.status(400).json({ "success": false, "message": "Unable to create new meeting" });
-                        console.log(result);
+                        return res.status(201).json({ "success": true, "result": meeting })
                     })
-                    return res.status(201).json({ "success": true, "result": meeting })
-                        .catch((error) => {
-                            return res.status(400).json({ "success": false, "message": "Unsuccessful meeting creation", "result": "Failure", "user": decoded.user, "error": error });
 
-                        })
+                }).catch((error) => {
+                    return res.status(400).json({ "success": false, "message": "Unsuccessful meeting creation", "result": "Failure", "user": decoded.user, "error": error });
+
                 })
         })
     },

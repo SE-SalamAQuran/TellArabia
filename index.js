@@ -70,37 +70,40 @@ app.use('/users', userRoutes);
 app.post('/orders/new', async (req, res) => {
     t = req.headers['authorization'];
     jwt.verify(t, secretKey, async (err, decoded) => {
-        if (err) res.status(403).json({ "Success": false, "Message": "Invalid access token" })
-        const files = req.files;
-        const { service, subject, language, topic, details, deadline } = req.body;
+        if (err) { res.status(403).json({ "Success": false, "Message": "Invalid access token" }); }
+        else if (decoded) {
 
-        const url = req.protocol + "://" + req.get("host") + "/";
-        var result = [];
-        files.forEach(file => {
-            result.push(url + 'uploads/' + file.filename);
-        });
+            const files = req.files;
+            const { service, subject, language, topic, details, deadline } = req.body;
 
-        const newOrder = new Order({
-            service: service,
-            subject: subject,
-            language: language,
-            topic: topic,
-            deadline: deadline,
-            details: details,
-            attachments: result,
-            user: decoded.user._id,
-        })
-
-        await newOrder.save()
-            .then((order) => {
-                User.findOneAndUpdate({ _id: decoded.user._id }, { $push: { orders: order } }).exec(function (e, result) {
-                    if (e) return res.status(400).json({ "success": false, "message": "Unable to add order to user" });
-                    console.log(result);
-                })
-                return res.status(201).json({ "success": true, "message": "Successful order upload", "result": "Succeded", "user": decoded.user, "order": order });
-            }).catch((e) => {
-                return res.status(400).json({ "success": false, "message": "Unsuccessful order upload", "result": "Failure", "user": decoded.user, "error": e });
+            const url = req.protocol + "://" + req.get("host") + "/";
+            var result = [];
+            files.forEach(file => {
+                result.push(url + 'uploads/' + file.filename);
             });
+
+            const newOrder = new Order({
+                service: service,
+                subject: subject,
+                language: language,
+                topic: topic,
+                deadline: deadline,
+                details: details,
+                attachments: result,
+                user: decoded.user._id,
+            })
+
+            await newOrder.save()
+                .then((order) => {
+                    User.findOneAndUpdate({ _id: decoded.user._id }, { $push: { orders: order } }).exec(function (e, result) {
+                        if (e) return res.status(400).json({ "success": false, "message": "Unable to add order to user" });
+                        return res.status(201).json({ "success": true, "message": "Successful order upload", "result": "Succeded", "user": decoded.user, "order": order });
+                    })
+                }).catch((e) => {
+                    return res.status(400).json({ "success": false, "message": "Unsuccessful order upload", "result": "Failure", "user": decoded.user, "error": e });
+                });
+
+        }
 
     })
 

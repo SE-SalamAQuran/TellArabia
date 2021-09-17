@@ -40,6 +40,10 @@ const orderSchema = new Schema({
     deadline: {
         type: String,
         required: true,
+    },
+    confirmed: {
+        type: Boolean,
+        default: false,
     }
 
 }, { timestamps: true });
