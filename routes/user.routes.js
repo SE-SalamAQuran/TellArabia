@@ -7,4 +7,6 @@ router.get('/orders/all', userControllers.getOrdersList);
 router.post('/find_user', userControllers.findUser);
 router.post('/complaints/new', userControllers.addComplaint);
 
+router.delete('/delete', userControllers.deleteUser);
+
 module.exports = router;

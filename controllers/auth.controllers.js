@@ -178,7 +178,7 @@ module.exports = {
             if (err) res.status(404).json({ "success": false, "message": "User not found" });
             else if (user) {
                 bcrypt.compare(password, user.password, function (error, passMatch) {
-                    if (error) res.status(401).json({ "success": false, "message": "Password is incorrect" });
+                    if (error || !passMatch) { return res.status(401).json({ "success": false, "message": "Password is incorrect" }); }
                     else {
                         let jwtData = {
                             _id: user["_id"],
