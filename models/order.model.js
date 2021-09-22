@@ -10,7 +10,6 @@ const orderSchema = new Schema({
     service: {
         type: String,
         required: true,
-        enum: ["Graphic Design", "Online Marketing", "Writing & Research", "Web Design & Development"]
     },
     subject: {
         type: String,

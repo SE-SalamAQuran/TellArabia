@@ -16,6 +16,7 @@ const app = express();
 const userRoutes = require("./routes/user.routes");
 const meetingRoutes = require("./routes/meeting.routes");
 // const uploadRoutes = require("./routes/upload.routes");
+const servicesRoutes = require('./routes/service.routes');
 const authRoutes = require('./routes/auth.routes');
 const { MulterError } = require('multer');
 
@@ -66,6 +67,7 @@ app.use(express.static(path.join(__dirname, "./uploads")));
 app.use('/meetings', meetingRoutes);
 app.use('/auth', authRoutes);
 app.use('/users', userRoutes);
+app.use('/services', servicesRoutes);
 
 app.post('/orders/new', async (req, res) => {
     t = req.headers['authorization'];
