@@ -283,5 +283,46 @@ module.exports = {
         } else {
             return res.status(403).json({ "success": false, "message": "Invalid refresh token" });
         }
+    },
+    adminLogin: async (req, res) => {
+        const { phone, password } = req.body;
+        User.findOne({ phone: phone }, (err, user) => {
+            if (err) res.status(404).json({ "success": false, "message": "User not found" });
+            else if (user && user.is_admin) {
+                bcrypt.compare(password, user.password, function (error, passMatch) {
+                    if (error || !passMatch) { return res.status(401).json({ "success": false, "message": "Password is incorrect" }); }
+                    else {
+                        let jwtData = {
+                            _id: user["_id"],
+                            phone: user["phone"],
+                            user_type: user["user_type"],
+                            name: user["name"],
+                            city: user["city"],
+                            country: user["country"],
+                            address: user["address"],
+                            zipCode: user["zipCode"],
+                        };
+                        var token = jwt.sign({
+                            user: jwtData
+                        }, secretKey, { expiresIn: '14d' });
+                        var refreshToken = randToken.uid(256);
+                        refreshTokens[refreshToken] = user["phone"];
+                        let decoded = jwt.verify(token, secretKey);
+                        const client = decoded.user;
+                        res.status(200).json({
+                            token: token,
+                            refresh: refreshToken,
+                            currentUser: client
+                        });
+                    }
+                })
+            }
+            else if (user && !user.is_admin) {
+                res.status(403).json({ "success": false, "message": "Unauthorized Access, please login as Admin" })
+            }
+            else {
+                res.status(401).json({ "success": false, "message": "User not found" })
+            }
+        })
     }
 }
