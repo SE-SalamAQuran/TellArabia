@@ -15,7 +15,7 @@ const User = require("./models/user.model");
 const app = express();
 const userRoutes = require("./routes/user.routes");
 const meetingRoutes = require("./routes/meeting.routes");
-// const uploadRoutes = require("./routes/upload.routes");
+const adminRoutes = require("./routes/admin.routes");
 const servicesRoutes = require('./routes/service.routes');
 const authRoutes = require('./routes/auth.routes');
 const { MulterError } = require('multer');
@@ -63,11 +63,13 @@ app.use(express.json({
 app.use(multer({ dest: "./uploads" }).array('files', 6));
 app.use(express.static(path.join(__dirname, "./uploads")));
 
+
 // app.use('/student', customerRoutes);
 app.use('/meetings', meetingRoutes);
 app.use('/auth', authRoutes);
 app.use('/users', userRoutes);
 app.use('/services', servicesRoutes);
+app.use('/admin', adminRoutes);
 
 app.post('/orders/new', async (req, res) => {
     t = req.headers['authorization'];
@@ -123,6 +125,24 @@ app.get("/uploads/:bin", (req, res) => {
         res.end(data);
     });
 });
+
+app.patch("/avatar", (req, res) => {
+    let token = req.headers['authorization'];
+    jwt.verify(token, secretKey, (err, decoded) => {
+        if (err) { return res.status(403).json({ "success": false, "message": "Unauthorized access, invalid token" }) }
+        const client = decoded.user;
+        const image = req.files[0];
+        const url = req.protocol + "://" + req.get("host") + "/";
+        console.log(url + "uploads/" + image.filename);
+        User.findOneAndUpdate({ _id: client._id }, { avatar: url + "uploads/" + image.filename }).exec((e, result) => {
+            if (e) {
+                return res.status(400).json({ "success": false, "message": "Error Updating User Avatar", "Err": e });
+            } else {
+                return res.status(200).json({ "success": true, "message": "Updated successfully", "result": result });
+            }
+        })
+    })
+})
 
 app.listen(port, () => {
     console.log(`Server Up on Port ${port}`);

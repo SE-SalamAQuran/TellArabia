@@ -65,6 +65,10 @@ const userSchema = new Schema({
     is_admin: {
         type: Boolean,
         default: false
+    },
+    avatar: {
+        type: String,
+        default: ""
     }
 
 }, { timestamps: true })

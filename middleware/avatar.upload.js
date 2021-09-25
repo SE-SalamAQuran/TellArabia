@@ -1,7 +1,7 @@
 const multer = require('multer');
 const methodOverride = require('method-override');
 const dotenv = require('dotenv').config({});
-const DIR = "../uploads";
+const DIR = "../avatarw";
 let fs = require("fs"),
     path = require("path");
 
@@ -27,21 +27,12 @@ function containsObject(obj, array) {
 var upload = new multer({
     storage: storage,
     fileFilter: (req, file, cb) => {
-        //List of supported file types
-        const supported_types =
+        const supported_types =  //List of supported file types
             [
                 "image/png",
                 "image/jpeg",
                 "image/jpg",
-                "application/pdf",
-                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                "application/msword",
-                "text/csv",
                 "image/bmp",
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                "application/vnd.ms-excel",
-                "application/vnd.ms-powerpoint",
-                "application/vnd.openxmlformats-officedocument.presentationml.presentation"
             ]
         if (
             containsObject(file.mimetype, supported_types)
@@ -49,7 +40,7 @@ var upload = new multer({
             cb(null, true);
         } else {
             cb(null, false);
-            return cb(new Error("Only .png, .jpg and .jpeg, .bmp, .pdf, .docx, .doc, .xlsx, .csv, .xls, .ppt, .pptx formats allowed!"));
+            return cb(new Error("Only .png, .jpg and .jpeg, .bmp formats are allowed!"));
         }
     },
 });
