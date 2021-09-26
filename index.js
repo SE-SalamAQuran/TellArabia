@@ -131,14 +131,12 @@ app.patch("/avatar", (req, res) => {
     jwt.verify(token, secretKey, (err, decoded) => {
         if (err) { return res.status(403).json({ "success": false, "message": "Unauthorized access, invalid token" }) }
         const client = decoded.user;
-        const image = req.files[0];
-        const url = req.protocol + "://" + req.get("host") + "/";
-        console.log(url + "uploads/" + image.filename);
-        User.findOneAndUpdate({ _id: client._id }, { avatar: url + "uploads/" + image.filename }).exec((e, result) => {
+        const image = req.body.image;
+        User.findOneAndUpdate({ _id: client._id }, { avatar: image }).exec((e, result) => {
             if (e) {
                 return res.status(400).json({ "success": false, "message": "Error Updating User Avatar", "Err": e });
             } else {
-                return res.status(200).json({ "success": true, "message": "Updated successfully", "result": result });
+                return res.status(200).json({ "success": true, "message": "Updated successfully" });
             }
         })
     })
