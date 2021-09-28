@@ -55,7 +55,6 @@ module.exports = {
                         phone: phone,
                         name: name,
                         password: hash,
-
                         city: city,
                         address: address,
                         country: country,

@@ -56,7 +56,7 @@ const userSchema = new Schema({
     },
     user_type: {
         type: Number,
-        enum: [0, 1], // 0: student, 1: business
+        enum: [0, 1, 2], // 0: student, 1: business, 2: Employee
     },
     is_active: {
         type: Boolean,
