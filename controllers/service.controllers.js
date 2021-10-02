@@ -1,5 +1,6 @@
 const User = require("../models/user.model");
 const Service = require("../models/service.model");
+
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv").config({});
 const secretKey = process.env.JWT_SECRET;
@@ -48,5 +49,33 @@ module.exports = {
                 })
             }
         })
-    }
+    },
+    getAllServices: async (req, res) => {
+        let token = req.headers['authorization'];
+        jwt.verify(token, secretKey, (err, decoded) => {
+            if (err) { return res.status(403).json({ "success": false, "message": "Invalid access token" }) }
+            else {
+                services = {}
+                Service.aggregate([
+                    {
+                        $group: {
+                            _id: "$main_category",
+                            entries: { $push: "$$ROOT" }
+                        }
+                    }
+                ]).then((result) => {
+                    result.forEach((item) => {
+                        services[item['_id']] = item["entries"];
+                    });
+                    return res.status(200).json({ "success": true, "result": services });
+
+                }).catch((err) => {
+                    console.log(err);
+                    return res.status(400).json({ "success": false, "Error": err, "message": "Error fetching services" });
+                });
+            }
+        })
+    },
+
+
 }
