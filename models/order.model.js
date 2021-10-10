@@ -8,8 +8,9 @@ const orderSchema = new Schema({
         required: true,
     },
     service: {
-        type: String,
+        type: mongoose.Types.ObjectId,
         required: true,
+        ref: "Service"
     },
     subject: {
         type: String,
