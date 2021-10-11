@@ -115,11 +115,19 @@ module.exports = {
         jwt.verify(token, secretKey, (err, decoded) => {
             if (err) { return res.status(403).json({ "success": false, "message": "Invalid access token" }) }
             else {
-                services = {}
+                var services = {
+
+                }
                 Service.find({}).populate('main_category').populate('sub_categories')
                     .then((result) => {
                         result.forEach((item) => {
-                            services[item['main_category']['name']] = item['sub_categories']
+                            // console.log(item.main_category);
+                            services[item['main_category']['name'].toLowerCase()] = {
+                                "name": item['main_category']['name'],
+                                "url": item['main_category']['url'],
+                                "services": item['sub_categories']
+                            };
+
                         })
                         return res.status(200).json({ "success": true, "result": services });
 
