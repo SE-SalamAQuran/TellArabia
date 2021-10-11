@@ -120,16 +120,8 @@ module.exports = {
                 }
                 Service.find({}).populate('main_category').populate('sub_categories')
                     .then((result) => {
-                        result.forEach((item) => {
-                            // console.log(item.main_category);
-                            services[item['main_category']['name'].toLowerCase()] = {
-                                "name": item['main_category']['name'],
-                                "url": item['main_category']['url'],
-                                "services": item['sub_categories']
-                            };
 
-                        })
-                        return res.status(200).json({ "success": true, "result": services });
+                        return res.status(200).json({ "success": true, "result": result });
 
                     }).catch((error) => {
                         return res.status(400).json({ "success": false, "message": "Unable to find services" });
