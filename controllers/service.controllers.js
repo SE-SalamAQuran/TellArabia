@@ -87,6 +87,7 @@ module.exports = {
                                         parentCategory: service.main_category,
                                         name: sub.name,
                                         price: sub.price,
+                                        image: sub.url,
                                         description: sub.description,
                                         addedBy: user._id,
                                     });

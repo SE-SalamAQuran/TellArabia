@@ -19,6 +19,10 @@ const subCategorySchema = new Schema({ //Sub-categories schema
         type: String,
         default: ""
     },
+    image: {
+        type: String,
+        required: true,
+    },
     addedBy: {
         type: mongoose.Types.ObjectId,
         ref: 'User',
