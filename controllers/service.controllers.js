@@ -6,6 +6,19 @@ const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv").config({});
 const secretKey = process.env.JWT_SECRET;
 
+function getRandom(arr, n) {
+    var result = new Array(n),
+        len = arr.length,
+        taken = new Array(len);
+    if (n > len) n = len;
+    while (n--) {
+        var x = Math.floor(Math.random() * len);
+        result[n] = arr[x in taken ? taken[x] : x];
+        taken[x] = --len in taken ? taken[len] : len;
+    }
+    return result;
+}
+
 module.exports = {
     addCategory: async (req, res) => {
         let token = req.headers['authorization'];
@@ -116,9 +129,7 @@ module.exports = {
         jwt.verify(token, secretKey, (err, decoded) => {
             if (err) { return res.status(403).json({ "success": false, "message": "Invalid access token" }) }
             else {
-                var services = {
-
-                }
+                var services = {};
                 Service.find({}).populate('main_category').populate('sub_categories')
                     .then((result) => {
 
@@ -132,5 +143,30 @@ module.exports = {
         })
     },
 
+    getPopularServices: async (req, res) => {
+        let token = req.headers['authorization'];
+        jwt.verify(token, secretKey, (err, decoded) => {
+            if (err) { return res.status(403).json({ "success": false, "message": "Invalid access token" }) }
+            else {
+                // , { sub_categories: { $slice: 5 } }
+                Service.find({})
+                    .populate('main_category')
+                    .populate('sub_categories')
+                    .exec(function (e, result) {
+                        if (e) { return res.status(404).json({ "success": false, "message": "No services found", "Error": e }) }
+                        let sub_arr = [];
+                        result.forEach((item) => {
+                            sub_arr.push(getRandom(item.sub_categories, 5));
+                        })
+                        sub_arr.forEach((s) => {
+                            console.log(s.length);
+                        })
+
+                        return res.status(200).json({ "success": true, "result": sub_arr });
+                    });
+            }
+
+        })
+    }
 
 }
