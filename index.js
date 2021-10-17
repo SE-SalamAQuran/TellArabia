@@ -19,7 +19,8 @@ const adminRoutes = require("./routes/admin.routes");
 const servicesRoutes = require('./routes/service.routes');
 const authRoutes = require('./routes/auth.routes');
 const { MulterError } = require('multer');
-
+const offerRoutes = require("./routes/offer.routes");
+const Student = require('./models/student.model');
 
 // DB connection
 mongoose.connect(uri, {
@@ -70,6 +71,7 @@ app.use('/auth', authRoutes);
 app.use('/users', userRoutes);
 app.use('/services', servicesRoutes);
 app.use('/admin', adminRoutes);
+app.use('/offers', offerRoutes);
 
 app.post('/orders/new', async (req, res) => {
     t = req.headers['authorization'];
@@ -99,7 +101,7 @@ app.post('/orders/new', async (req, res) => {
 
             await newOrder.save()
                 .then((order) => {
-                    User.findOneAndUpdate({ _id: decoded.user._id }, { $push: { orders: order } }).exec(function (e, result) {
+                    Student.findOneAndUpdate({ userInfo: decoded.user._id }, { $push: { orders: order } }).exec(function (e, result) {
                         if (e) return res.status(400).json({ "success": false, "message": "Unable to add order to user" });
                         return res.status(201).json({ "success": true, "message": "Successful order upload", "result": "Succeded", "user": decoded.user, "order": order });
                     })
@@ -140,7 +142,8 @@ app.patch("/avatar", (req, res) => {
             }
         })
     })
-})
+});
+
 
 app.listen(port, () => {
     console.log(`Server Up on Port ${port}`);

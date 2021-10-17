@@ -110,23 +110,15 @@ module.exports = {
                         country: country,
                         user_type: user_type,
                     })
-                    const { telephone, crn, fax, language, socialMediaURLs, industry } = req.body;
-                    if (!isTelephone(fax)) {
-                        return res.status(400).json({ "success": false, "message": "Invalid fax number" });
-                    } else if (!isTelephone(telephone)) {
-                        return res.status(400).json({ "success": false, "message": "Invalid telephone number" });
-                    }
+                    const { language, socialMediaURLs } = req.body;
+
 
                     await user.save()
                         .then((user) => {
                             const business = new Business({
-                                telephone: telephone,
-                                fax: fax,
                                 name: name,
-                                crn: crn,
                                 language: language,
                                 socialMediaURLs: socialMediaURLs,
-                                industry: industry,
                                 userInfo: user._id,
                             })
                             business.save().then(() => {

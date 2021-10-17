@@ -39,11 +39,6 @@ const userSchema = new Schema({
         default: 0,
 
     },
-    orders: {
-        type: [mongoose.Types.ObjectId],
-        ref: 'Order',
-        default: [],
-    },
     meetings: {
         type: [mongoose.Types.ObjectId],
         ref: 'Meeting',
@@ -56,7 +51,7 @@ const userSchema = new Schema({
     },
     user_type: {
         type: Number,
-        enum: [0, 1, 2], // 0: student, 1: business, 2: Employee
+        enum: [0, 1, 2], // 0: student, 1: business / freelancer, 2: Employee 
     },
     is_active: {
         type: Boolean,

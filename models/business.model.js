@@ -2,31 +2,8 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 const validator = require('validator');
 
-const businessSchema = new Schema({
-    name: {
-        type: String,
-        required: true,
+const businessSchema = new Schema({ //Freelancer Schema
 
-    },
-
-    telephone: {
-        type: String,
-        unique: true,
-        required: true,
-    },
-    crn: { //Company registration number
-        type: String,
-        required: true,
-        minlength: 8,
-        unique: true,
-    },
-
-    fax: {
-        type: String,
-        unique: true,
-        required: true,
-
-    },
     language: {
         type: String,
         default: ""
@@ -55,13 +32,12 @@ const businessSchema = new Schema({
             default: ""
 
         },
-
-
     },
 
-    industry: { //Business type
-        type: String,
-        required: true,
+    offers: {
+        type: [mongoose.Types.ObjectId],
+        ref: 'Offer',
+        default: [],
     },
     userInfo: { //Contains address + other info stored in user model
         type: mongoose.Types.ObjectId,

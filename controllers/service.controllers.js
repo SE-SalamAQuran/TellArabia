@@ -148,7 +148,7 @@ module.exports = {
         jwt.verify(token, secretKey, (err, decoded) => {
             if (err) { return res.status(403).json({ "success": false, "message": "Invalid access token" }) }
             else {
-                // , { sub_categories: { $slice: 5 } }
+
                 Service.find({})
                     .populate('main_category')
                     .populate('sub_categories')
@@ -157,11 +157,7 @@ module.exports = {
                         let sub_arr = [];
                         result.forEach((item) => {
                             sub_arr.push(getRandom(item.sub_categories, 5));
-                        })
-                        sub_arr.forEach((s) => {
-                            console.log(s.length);
-                        })
-
+                        });
                         return res.status(200).json({ "success": true, "result": sub_arr });
                     });
             }

@@ -11,10 +11,6 @@ const subCategorySchema = new Schema({ //Sub-categories schema
         required: true,
         unique: true,
     },
-    price: {
-        type: String,
-        required: true,
-    },
     description: {
         type: String,
         default: ""
@@ -23,10 +19,12 @@ const subCategorySchema = new Schema({ //Sub-categories schema
         type: String,
         required: true,
     },
-    addedBy: {
-        type: mongoose.Types.ObjectId,
-        ref: 'User',
+    offers: {
+        type: [mongoose.Types.ObjectId],
+        ref: 'Offer',
+        default: []
     }
+
 }, { timestamps: true });
 
 module.exports = mongoose.model('Sub', subCategorySchema);

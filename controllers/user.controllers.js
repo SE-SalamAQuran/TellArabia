@@ -35,10 +35,32 @@ module.exports = {
                 return res.status(403).json({ "success": false, "message": "Unauthorized access, invalid access token" });
             }
             const client = decoded.user;
-            User.findOne({ _id: client._id }).populate('orders').populate('meetings').populate('complaints').exec((e, u) => {
-                if (e) return res.status(404).json({ "success": false, "message": "User not found in the DB!" });
-                return res.status(200).json({ "success": true, "result": u });
-            })
+            if (client.user_type === 0) {
+                Student.findOne({ userInfo: client._id })
+                    .populate('userInfo')
+                    .populate({ path: 'userInfo.complaints' })
+                    .populate({ path: 'userInfo.meetings' })
+                    .populate('orders')
+                    .exec(function (error, result) {
+                        if (error) { return res.status(400).json({ "success": false, "message": "User not found" }) }
+                        return res.status(200).json({ "success": true, "profile": result });
+                    });
+            } else if (client.user_type === 1) {
+                Business.findOne({ userInfo: client._id })
+                    .populate('userInfo')
+                    .populate({ path: 'userInfo.complaints' })
+                    .populate({ path: 'userInfo.meetings' })
+                    .populate('offers')
+                    .exec(function (e, freelancer) {
+                        if (e) { return res.status(400).json({ "success": false, "message": "User not found" }) }
+                        return res.status(200).json({ "success": true, "profile": freelancer });
+                    })
+
+            }
+            // User.findOne({ _id: client._id }).populate('orders').populate('meetings').populate('complaints').exec((e, u) => {
+            //     if (e) return res.status(404).json({ "success": false, "message": "User not found in the DB!" });
+            //     return res.status(200).json({ "success": true, "result": u });
+            // })
         })
     },
     getOrdersList: async (req, res) => {
@@ -141,5 +163,23 @@ module.exports = {
             }
         })
     },
+    updateName: async (req, res) => {
+        let token = req.headers['authorization'];
+        jwt.verify(token, secretKey, (err, decoded) => {
+            if (err) {
+                return res.status(403).json({ "success": false, "message": "Unauthorized access, invalid access token" });
+            }
+            const name = req.body.name;
+            if (!name || name.length === 0 || !/^[a-zA-Z\s]*$/.test(name)) {
+                return res.status(400).json({ "success": false, "message": "Please insert a valid name" })
+            }
+            User.findOneAndUpdate({ _id: decoded.user._id }, { name: name }, (error, user) => {
+                if (error) {
+                    return res.status(400).json({ "success": false, "message": "Error updating name" });
+                }
+                return res.status(200).json({ "success": true, "message": "User name updated successfully" });
+            })
+        })
+    }
 
 }
