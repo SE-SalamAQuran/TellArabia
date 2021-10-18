@@ -7,23 +7,17 @@ const orderSchema = new Schema({
         ref: 'User',
         required: true,
     },
-    service: {
-        type: mongoose.Types.ObjectId,
-        required: true,
-        ref: "Service"
-    },
-    subject: {
-        type: String,
-        required: true,
-    },
+
     language: {
         type: String,
         required: true,
     },
-    topic: {
-        type: String,
-        required: true,
+    offer: {
+        type: mongoose.Types.ObjectId,
+        ref: 'Offer',
+
     },
+
     details: {
         type: String,
         required: true,

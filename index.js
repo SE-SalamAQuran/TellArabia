@@ -3,6 +3,7 @@ const cors = require('cors');
 const morgan = require("morgan");
 const dotenv = require('dotenv').config({});
 const mongoose = require("mongoose");
+const Offer = require("./models/offer.model");
 const multer = require("multer");
 const path = require('path');
 const jwt = require("jsonwebtoken");
@@ -21,6 +22,7 @@ const authRoutes = require('./routes/auth.routes');
 const { MulterError } = require('multer');
 const offerRoutes = require("./routes/offer.routes");
 const Student = require('./models/student.model');
+const Sub = require("./models/sub_category.model");
 
 // DB connection
 mongoose.connect(uri, {
@@ -80,7 +82,7 @@ app.post('/orders/new', async (req, res) => {
         else if (decoded) {
 
             const files = req.files;
-            const { service, subject, language, topic, details, deadline } = req.body;
+            const { offer, language, details, deadline } = req.body;
 
             const url = req.protocol + "://" + req.get("host") + "/";
             var result = [];
@@ -89,10 +91,8 @@ app.post('/orders/new', async (req, res) => {
             });
 
             const newOrder = new Order({
-                service: service,
-                subject: subject,
+                offer: offer,
                 language: language,
-                topic: topic,
                 deadline: deadline,
                 details: details,
                 attachments: result,
@@ -101,10 +101,16 @@ app.post('/orders/new', async (req, res) => {
 
             await newOrder.save()
                 .then((order) => {
-                    Student.findOneAndUpdate({ userInfo: decoded.user._id }, { $push: { orders: order } }).exec(function (e, result) {
-                        if (e) return res.status(400).json({ "success": false, "message": "Unable to add order to user" });
-                        return res.status(201).json({ "success": true, "message": "Successful order upload", "result": "Succeded", "user": decoded.user, "order": order });
+                    Offer.findOneAndUpdate({ _id: offer }, { $push: { orders: order } }).exec((error, offer) => {
+                        if (error) {
+                            return res.status(400).json({ "success": false, "message": "Can't add order on this offer" });
+                        }
+                        Student.findOneAndUpdate({ userInfo: decoded.user._id }, { $push: { orders: order } }).exec(function (e, result) {
+                            if (e) return res.status(400).json({ "success": false, "message": "Unable to add order to user" });
+                            return res.status(201).json({ "success": true, "message": "Successful order upload", "result": "Succeded", "user": decoded.user, "order": order });
+                        })
                     })
+
                 }).catch((e) => {
                     return res.status(400).json({ "success": false, "message": "Unsuccessful order upload", "result": "Failure", "user": decoded.user, "error": e });
                 });
@@ -144,6 +150,24 @@ app.patch("/avatar", (req, res) => {
     })
 });
 
+// app.get("/images", (req, res) => {
+//     Sub.find({}, (err, result) => {
+//         if (err) { return res.status(400).json({ "Error": err }) }
+//         result.forEach((item) => {
+//             var logger = fs.createWriteStream('log.json', {
+//                 flags: 'a' // 'a' means appending (old data will be preserved)
+//             });
+//             let data = {
+//                 name: item.name,
+//                 image: item.image,
+//             };
+
+//             let serial_data = JSON.stringify(data);
+
+//             logger.write(serial_data);
+//         })
+//     })
+// })
 
 app.listen(port, () => {
     console.log(`Server Up on Port ${port}`);

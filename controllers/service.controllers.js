@@ -130,7 +130,36 @@ module.exports = {
             if (err) { return res.status(403).json({ "success": false, "message": "Invalid access token" }) }
             else {
                 var services = {};
-                Service.find({}).populate('main_category').populate('sub_categories')
+                Service.find({})
+                    .populate('main_category')
+                    .populate('sub_categories')
+                    .populate({
+                        path: 'sub_categories',
+                        populate: {
+                            path: 'offers'
+                        }
+                    }).populate({
+                        path: 'sub_categories',
+                        populate: {
+                            path: 'offers',
+                            populate: {
+                                path: 'addedBy',
+
+                            }
+                        }
+                    })
+                    .populate({
+                        path: 'sub_categories',
+                        populate: {
+                            path: 'offers',
+                            populate: {
+                                path: 'addedBy',
+                                populate: {
+                                    path: "userInfo"
+                                }
+                            }
+                        }
+                    })
                     .then((result) => {
 
                         return res.status(200).json({ "success": true, "result": result });
@@ -152,6 +181,12 @@ module.exports = {
                 Service.find({})
                     .populate('main_category')
                     .populate('sub_categories')
+                    .populate({
+                        path: 'sub_categories',
+                        populate: {
+                            path: 'offers'
+                        }
+                    })
                     .exec(function (e, result) {
                         if (e) { return res.status(404).json({ "success": false, "message": "No services found", "Error": e }) }
                         let sub_arr = [];

@@ -17,7 +17,12 @@ const offerSchema = new Schema({
     service: {
         type: mongoose.Types.ObjectId,
         ref: 'Sub',
-    }
+    },
+    orders: {
+        type: [mongoose.Types.ObjectId],
+        ref: 'Order',
+        default: []
+    },
 
 }, { timestamps: true });
 

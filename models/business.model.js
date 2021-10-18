@@ -11,24 +11,20 @@ const businessSchema = new Schema({ //Freelancer Schema
     socialMediaURLs: {
         facebook: {
             type: String,
-            unique: true,
             default: ""
         },
         twitter: {
             type: String,
-            unique: true,
             default: "",
 
         },
         linkedIn: {
             type: String,
-            unique: true,
             default: "",
 
         },
         website: {
             type: String,
-            unique: true,
             default: ""
 
         },

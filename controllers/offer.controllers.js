@@ -152,6 +152,7 @@ module.exports = {
                             path: 'userInfo'
                         }
                     })
+                    .populate("orders")
                     .exec(function (error, offers) {
                         if (error) { return res.status(404).json({ "success": false, "message": "No offers found on this service" }) }
 
