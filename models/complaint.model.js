@@ -14,14 +14,18 @@ const complaintSchema = new Schema({
         type: String,
         required: true,
     },
-    user: {
+    complainant: {
         type: mongoose.Types.ObjectId,
-        ref: 'User'
+        ref: 'User',
     },
     status: {
         type: "String",
         enum: ["Pending", "In Progress", "Resolved", "Closed"],
         default: "Pending"
+    },
+    accused: {
+        type: mongoose.Types.ObjectId,
+        ref: 'User',
     }
 
 }, { timestamps: true });

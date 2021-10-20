@@ -17,7 +17,6 @@ const orderSchema = new Schema({
         ref: 'Offer',
 
     },
-
     details: {
         type: String,
         required: true,
@@ -27,10 +26,7 @@ const orderSchema = new Schema({
         enum: ["Pending", "In progress", "Removed", "Complete"],
         default: "Pending",
     },
-    attachments: [{
-        type: String, //Array of attachments' URLs
-        required: true,
-    }],
+
     deadline: {
         type: String,
         required: true,

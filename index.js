@@ -4,11 +4,8 @@ const morgan = require("morgan");
 const dotenv = require('dotenv').config({});
 const mongoose = require("mongoose");
 const Offer = require("./models/offer.model");
-const multer = require("multer");
-const path = require('path');
 const jwt = require("jsonwebtoken");
 const Order = require("./models/order.model");
-const fs = require('fs');
 const uri = process.env.MONGO_URI;
 const port = process.env.PORT;
 const secretKey = process.env.JWT_SECRET;
@@ -19,7 +16,6 @@ const meetingRoutes = require("./routes/meeting.routes");
 const adminRoutes = require("./routes/admin.routes");
 const servicesRoutes = require('./routes/service.routes');
 const authRoutes = require('./routes/auth.routes');
-const { MulterError } = require('multer');
 const offerRoutes = require("./routes/offer.routes");
 const Student = require('./models/student.model');
 const Sub = require("./models/sub_category.model");
@@ -63,8 +59,7 @@ app.use(express.json({
     limit: "150mb"
 }));
 
-app.use(multer({ dest: "./uploads" }).array('files', 6));
-app.use(express.static(path.join(__dirname, "./uploads")));
+
 
 
 // app.use('/student', customerRoutes);
@@ -75,99 +70,7 @@ app.use('/services', servicesRoutes);
 app.use('/admin', adminRoutes);
 app.use('/offers', offerRoutes);
 
-app.post('/orders/new', async (req, res) => {
-    t = req.headers['authorization'];
-    jwt.verify(t, secretKey, async (err, decoded) => {
-        if (err) { res.status(403).json({ "Success": false, "Message": "Invalid access token" }); }
-        else if (decoded) {
 
-            const files = req.files;
-            const { offer, language, details, deadline } = req.body;
-
-            const url = req.protocol + "://" + req.get("host") + "/";
-            var result = [];
-            files.forEach(file => {
-                result.push(url + 'uploads/' + file.filename);
-            });
-
-            const newOrder = new Order({
-                offer: offer,
-                language: language,
-                deadline: deadline,
-                details: details,
-                attachments: result,
-                user: decoded.user._id,
-            })
-
-            await newOrder.save()
-                .then((order) => {
-                    Offer.findOneAndUpdate({ _id: offer }, { $push: { orders: order } }).exec((error, offer) => {
-                        if (error) {
-                            return res.status(400).json({ "success": false, "message": "Can't add order on this offer" });
-                        }
-                        Student.findOneAndUpdate({ userInfo: decoded.user._id }, { $push: { orders: order } }).exec(function (e, result) {
-                            if (e) return res.status(400).json({ "success": false, "message": "Unable to add order to user" });
-                            return res.status(201).json({ "success": true, "message": "Successful order upload", "result": "Succeded", "user": decoded.user, "order": order });
-                        })
-                    })
-
-                }).catch((e) => {
-                    return res.status(400).json({ "success": false, "message": "Unsuccessful order upload", "result": "Failure", "user": decoded.user, "error": e });
-                });
-
-        }
-
-    })
-
-})
-app.get("/uploads/:bin", (req, res) => {
-    const bin = req.params.bin;
-    var file = "/uploads/" + bin;
-    fs.readFile(__dirname + file, function (err, data) {
-        if (err) {
-            res.writeHead(404);
-            res.end(JSON.stringify(err));
-            return;
-        }
-        res.writeHead(200);
-        res.end(data);
-    });
-});
-
-app.patch("/avatar", (req, res) => {
-    let token = req.headers['authorization'];
-    jwt.verify(token, secretKey, (err, decoded) => {
-        if (err) { return res.status(403).json({ "success": false, "message": "Unauthorized access, invalid token" }) }
-        const client = decoded.user;
-        const image = req.body.image;
-        User.findOneAndUpdate({ _id: client._id }, { avatar: image }).exec((e, result) => {
-            if (e) {
-                return res.status(400).json({ "success": false, "message": "Error Updating User Avatar", "Err": e });
-            } else {
-                return res.status(200).json({ "success": true, "message": "Updated successfully" });
-            }
-        })
-    })
-});
-
-// app.get("/images", (req, res) => {
-//     Sub.find({}, (err, result) => {
-//         if (err) { return res.status(400).json({ "Error": err }) }
-//         result.forEach((item) => {
-//             var logger = fs.createWriteStream('log.json', {
-//                 flags: 'a' // 'a' means appending (old data will be preserved)
-//             });
-//             let data = {
-//                 name: item.name,
-//                 image: item.image,
-//             };
-
-//             let serial_data = JSON.stringify(data);
-
-//             logger.write(serial_data);
-//         })
-//     })
-// })
 
 app.listen(port, () => {
     console.log(`Server Up on Port ${port}`);

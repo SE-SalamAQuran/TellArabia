@@ -58,14 +58,13 @@ module.exports = {
                 if (e) { return res.status(400).json({ "success": false, "message": "Error Fetching User" }); }
                 else if (!user) {
                     return res.status(403).json({ "success": false, "message": "User not found" });
-
                 }
                 else if (!user.is_admin) {
                     return res.status(403).json({ "success": false, "message": "Invalid access to admin feature" });
                 }
-                Complaint.find({}).populate('user').populate('order').exec((error, result) => {
+                Complaint.find({}).populate('order').populate('complainant').populate('accused').exec((error, result) => {
                     if (error) {
-                        return res.status(400).json({ "success": false, "message": "Error Fetching Orders' Data" });
+                        return res.status(400).json({ "success": false, "message": "Error Fetching Orders' Data", "Error": error });
                     }
                     return res.status(200).json({ "success": true, "complaints": result });
                 })

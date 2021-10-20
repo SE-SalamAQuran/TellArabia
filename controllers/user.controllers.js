@@ -1,5 +1,6 @@
 const User = require("../models/user.model");
 const Order = require("../models/order.model");
+const Offer = require('../models/offer.model');
 const Meeting = require("../models/meeting.model");
 const Complaint = require("../models/complaint.model");
 const Student = require("../models/student.model");
@@ -89,23 +90,29 @@ module.exports = {
     },
     addComplaint: async (req, res) => {
         let token = req.headers['authorization'];
-        const { date, details, order } = req.body;
+        const { date, details, order, accused } = req.body;
         jwt.verify(token, secretKey, async (err, decoded) => {
             if (err) {
                 return res.status(403).json({ "success": false, "message": "Unauthorized access, invalid access token" });
             }
             const newComplaint = new Complaint({
-                user: decoded.user._id,
+                complainant: decoded.user._id,
                 date: date,
                 details: details,
                 order: order,
+                accused: accused,
             });
             await newComplaint.save()
                 .then((complaint) => {
                     User.findOneAndUpdate({ _id: decoded.user._id }, { $push: { complaints: complaint } }).exec(function (e, result) {
                         if (e) return res.status(400).json({ "success": false, "message": "Unable to create new complaint" });
+                        User.findOneAndUpdate({ _id: accused }, { $push: { reports: complaint } }).exec(function (e, result) {
+                            if (e) return res.status(400).json({ "success": false, "message": "Unable to append report to this user" });
+                            console.log("Complaint Successful");
+                        })
                         return res.status(201).json({ "success": true, "result": complaint })
                     })
+
                 })
                 .catch((e) => { return res.status(400).json({ "success": false, "message": "Invalid fields, check values and try again", "err": e }) });
         })
@@ -117,7 +124,7 @@ module.exports = {
             if (err) {
                 return res.status(403).json({ "success": false, "message": "Unauthorized access, invalid access token" })
             }
-            Complaint.find({ user: decoded.user._id }).exec((e, complaints) => {
+            Complaint.find({ complainant: decoded.user._id }).populate('accused').populate('order').exec((e, complaints) => {
                 if (e) return res.status(404).json({ "success": false, "message": "User not found in the DB!" });
                 return res.status(200).json({ "success": true, "result": complaints });
             })
@@ -179,6 +186,56 @@ module.exports = {
                     return res.status(400).json({ "success": false, "message": "Error updating name" });
                 }
                 return res.status(200).json({ "success": true, "message": "User name updated successfully" });
+            })
+        })
+    },
+    newOrder: async (req, res) => {
+        let t = req.headers['authorization'];
+        jwt.verify(t, secretKey, async (err, decoded) => {
+            if (err) { res.status(403).json({ "Success": false, "Message": "Invalid access token" }); }
+            else if (decoded) {
+
+                const { offer, language, details, deadline } = req.body;
+                const newOrder = new Order({
+                    offer: offer,
+                    language: language,
+                    deadline: deadline,
+                    details: details,
+                    user: decoded.user._id,
+                })
+
+                await newOrder.save()
+                    .then((order) => {
+                        Offer.findOneAndUpdate({ _id: offer }, { $push: { orders: order } }).exec((error, offer) => {
+                            if (error) {
+                                return res.status(400).json({ "success": false, "message": "Can't add order on this offer" });
+                            }
+                            Student.findOneAndUpdate({ userInfo: decoded.user._id }, { $push: { orders: order } }).exec(function (e, result) {
+                                if (e) return res.status(400).json({ "success": false, "message": "Unable to add order to user" });
+                                return res.status(201).json({ "success": true, "message": "Successful order upload", "result": "Succeded", "user": decoded.user, "order": order });
+                            })
+                        })
+
+                    }).catch((e) => {
+                        return res.status(400).json({ "success": false, "message": "Unsuccessful order upload", "result": "Failure", "user": decoded.user, "error": e });
+                    });
+
+            }
+
+        })
+    },
+    updateAvatar: async (req, res) => {
+        let token = req.headers['authorization'];
+        jwt.verify(token, secretKey, (err, decoded) => {
+            if (err) { return res.status(403).json({ "success": false, "message": "Unauthorized access, invalid token" }) }
+            const client = decoded.user;
+            const image = req.body.image;
+            User.findOneAndUpdate({ _id: client._id }, { avatar: image }).exec((e, result) => {
+                if (e) {
+                    return res.status(400).json({ "success": false, "message": "Error Updating User Avatar", "Err": e });
+                } else {
+                    return res.status(200).json({ "success": true, "message": "Updated successfully" });
+                }
             })
         })
     }

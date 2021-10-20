@@ -64,6 +64,11 @@ const userSchema = new Schema({
     avatar: {
         type: String,
         default: ""
+    },
+    reports: {
+        type: [mongoose.Types.ObjectId],
+        ref: 'Complaints',
+        default: []
     }
 
 }, { timestamps: true })
