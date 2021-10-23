@@ -17,7 +17,7 @@ module.exports = {
             else if (decoded.user.user_type != 1) {
                 return res.status(401).json({ "success": false, "message": "Must be a freelancer to add an offer" })
             } else {
-                const { price, images, service } = req.body;
+                const { price, images, service, description } = req.body;
                 if (images.length === 0) {
                     return res.status(400).json({ "success": true, "message": "You must add links to images of your previous work" })
                 }
@@ -32,6 +32,7 @@ module.exports = {
                                         service: result._id,
                                         addedBy: freelancer._id,
                                         images: images,
+                                        description: description,
                                     });
                                     await newOffer.save()
                                         .then((offer) => {
@@ -161,6 +162,21 @@ module.exports = {
 
             })
 
+        })
+    },
+    likeOffer: async (req, res) => {
+        let token = req.headers['authorization'];
+        jwt.verify(token, secretKey, (err, decoded) => {
+            if (err || !decoded) { return res.status(403).json({ "success": false, "message": "Invalid access token" }) }
+            else if (decoded.user.user_type != 0) {
+                return res.status(401).json({ "success": false, "message": "Non-student users can't like offers" });
+            }
+            const offerId = req.body.offer;
+            Offer.findOneAndUpdate({ _id: offerId }, { $inc: { likes: 1 } }).then((result) => {
+                return res.status(200).json({ "success": true, "message": "Like added successfully" });
+            }).catch((e) => {
+                return res.status(400).json({ "success": false, "message": "Unable to like this offer" });
+            })
         })
     }
 }

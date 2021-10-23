@@ -6,6 +6,6 @@ router.get("/by_service", offersController.getOffersByService);
 router.get('/offer', offersController.getOfferData);
 router.get('/user', offersController.getUserOffers);
 router.post("/new", offersController.newOffer);
-
+router.patch("/like", offersController.likeOffer);
 
 module.exports = router;

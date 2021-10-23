@@ -6,6 +6,14 @@ const offerSchema = new Schema({
         type: mongoose.Types.ObjectId,
         ref: "Business",
     },
+    description: {
+        type: String,
+        required: true,
+    },
+    likes: {
+        type: Number,
+        default: 0,
+    },
     price: {
         type: String,
         required: true,

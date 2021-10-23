@@ -63,7 +63,7 @@ const userSchema = new Schema({
     },
     avatar: {
         type: String,
-        default: ""
+        default: "https://firebasestorage.googleapis.com/v0/b/tellarabia-e4031.appspot.com/o/App%20Images%2Fmockup.jpg?alt=media&token=3a7a8dc4-1126-4b54-8210-3695a24f51df"
     },
     reports: {
         type: [mongoose.Types.ObjectId],

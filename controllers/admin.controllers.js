@@ -39,7 +39,7 @@ module.exports = {
                 else if (!user.is_admin) {
                     return res.status(403).json({ "success": false, "message": "Invalid access to admin feature" });
                 }
-                Order.find({}).populate('user').exec((error, result) => {
+                Order.find({}).populate('user').populate('offer').exec((error, result) => {
                     if (error) {
                         return res.status(400).json({ "success": false, "message": "Error Fetching Orders' Data" });
                     }
@@ -119,52 +119,47 @@ module.exports = {
         })
     },
 
-    addNewAdmin: async (req, res) => {
-        let token = req.headers['authorization'];
-        const { name, phone, country, city, address, password, passConfirmation } = req.body;
 
+    newAdmin: async (req, res) => {
+        let token = req.headers['authorization'];
         jwt.verify(token, secretKey, (err, decoded) => {
-            if (err) { return res.status(403).json({ "success": false, "message": "Invalid Bearer Token" }); }
-            const client = decoded.user;
-            User.findOne({ _id: client._id }, (e, user) => {
-                if (e) { return res.status(400).json({ "success": false, "message": "Error Fetching User" }); }
-                else if (!user) {
-                    return res.status(403).json({ "success": false, "message": "User not found" });
+            if (err) { return res.status(403).json({ "success": false, "message": "Unauthorized, invalid access token" }) }
+            User.findOne({ _id: decoded.user._id }, (e, user) => {
+                if (e || !user) {
+                    return res.status(404).json({ "success": false, "message": "User not found!" });
                 }
                 else if (!user.is_admin) {
-                    return res.status(403).json({ "success": false, "message": "Invalid access to admin feature" });
+                    return res.status(401).json({ "success": false, "message": "Invalid access credentials to admin feature" });
                 }
-
-            })
-
-            if (passConfirmation === password && password.length >= 8 && isPhoneNumber(phone)) {
-                bcrypt.hash(password, 10, async (err, hash) => {
-                    if (err) {
-                        return res.status(400).json({ "success": false, "message": "Error Hashing password" })
+                else {
+                    const { name, phone, city, country, password, user_type } = req.body;
+                    if (user_type != 2) {
+                        return res.status(400).json({ "success": false, "message": "Invalid user type" });
                     }
-                    const newAdmin = new User({
-                        name: name,
-                        phone: phone,
-                        country: country,
-                        city: city,
-                        address: address,
-                        password: hash,
-                        user_type: 2,
-                        is_admin: true,
-                    });
+                    if (password.length >= 8 && isPhoneNumber(phone)) {
+                        bcrypt.hash(password, 10, async (error, hashed) => {
+                            if (error) { return res.status(400).json({ "success": false, "message": "Unable to hash password" }) }
+                            const newAdmin = new User({
+                                name: name,
+                                password: hashed,
+                                city: city,
+                                phone: phone,
+                                country: country,
+                                user_type: user_type,
+                                is_admin: true,
+                            });
 
-                    await newAdmin.save()
-                        .then((admin) => {
-                            return res.status(201).json({ "success": true, "admin": admin });
+                            await newAdmin.save()
+                                .then((admin) => {
+                                    return res.status(201).json({ "success": true, "admin": admin });
+                                }).catch((insertError) => {
+                                    return res.status(400).json({ "success": false, "message": "User already exists", "Error": insertError });
+                                })
                         })
-                        .catch((error) => {
-                            return res.status(400).json({ "success": false, "message": "Error, admin may already exist", "Err": error })
-                        })
-
-                })
-            }
-
-        })
+                    }
+                }
+            })
+        });
     }
 
 }
