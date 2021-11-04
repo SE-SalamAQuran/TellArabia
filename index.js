@@ -62,14 +62,12 @@ app.use(express.json({
 
 
 
-// app.use('/student', customerRoutes);
 app.use('/meetings', meetingRoutes);
 app.use('/auth', authRoutes);
 app.use('/users', userRoutes);
 app.use('/services', servicesRoutes);
 app.use('/admin', adminRoutes);
 app.use('/offers', offerRoutes);
-
 
 
 app.listen(port, () => {

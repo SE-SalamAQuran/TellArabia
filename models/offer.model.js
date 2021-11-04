@@ -6,6 +6,9 @@ const offerSchema = new Schema({
         type: mongoose.Types.ObjectId,
         ref: "Business",
     },
+    title: {
+        type: String,
+    },
     description: {
         type: String,
         required: true,

@@ -5,6 +5,10 @@ const Meeting = require("../models/meeting.model");
 const Complaint = require("../models/complaint.model");
 const Student = require("../models/student.model");
 const Business = require("../models/business.model");
+const Application = require("../models/application.model");
+const Category = require("../models/category.model");
+const WishListItem = require("../models/wishlist.item.model");
+const Sub = require("../models/sub_category.model");
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv").config({});
 const secretKey = process.env.JWT_SECRET;
@@ -68,14 +72,17 @@ module.exports = {
                 return res.status(403).json({ "success": false, "message": "Unauthorized access, invalid access token" });
             }
             const client = decoded.user;
-            Order.find({ user: client._id }).populate('offer').populate({
-                path: "offer", populate: {
-                    path: "addedBy"
-                }
-            }).populate({ path: "offer", populate: { path: "addedBy", populate: { path: "userInfo" } } }).exec((err, orders) => {
-                if (err) return res.status(404).json({ "success": false, "message": "User not found in the DB!" });
-                return res.status(200).json({ "success": true, "result": orders });
-            })
+            WishListItem.find({ user: client._id }).populate({ path: 'service', select: 'name' })
+                .then((customs) => {
+                    Order.find({ user: client._id }).populate('offer', '-orders -service -__v -createdAt -updatedAt -addedBy -_id')
+                        .then((orders) => {
+                            return res.status(200).json({ "success": true, "result": { "orders_on_offers": orders, "custom_orders": customs } });
+                        }).catch(() => {
+                            return res.status(404).json({ "success": false, "message": "Unable to fetch orders!" });
+                        })
+                }).catch(() => {
+                    return res.status(400).json({ "success": false, "message": "Error fetching Custom Orders" });
+                });
         })
     },
     findUser: async (req, res) => {
@@ -238,6 +245,83 @@ module.exports = {
                 }
             })
         })
-    }
+    },
+    submitJobRequest: (req, res) => {
+        const token = req.headers['authorization'];
+        jwt.verify(token, secretKey, (err, decoded) => {
+            if (err || !decoded) { return res.status(403).json({ "success": false, "message": "Unauthorized access, invalid token" }) }
+            else if (decoded.user.user_type != 1) {
+                return res.status(401).json({ "success": false, "message": "Only freelancers can submit job applications" });
+            }
+            const { resume, role, category, field, sample, price_range, availability } = req.body;
+            Category.findOne({ name: category })
+                .then((cat) => {
+                    Sub.findOne({ name: field })
+                        .then(async (sub) => {
+                            const newApplication = new Application({
+                                category: cat._id,
+                                field: sub._id,
+                                sample: sample,
+                                role: role,
+                                resume: resume,
+                                freelancer: decoded.user._id,
+                                price_range: price_range,
+                                availability: availability,
+                            });
+                            await newApplication
+                                .save()
+                                .then(() => {
+                                    return res.status(201).json({ "success": true, "message": "Application submitted" });
+                                }).catch((e) => { return res.status(400).json({ "success": false, "message": "Make sure all fields are filled", "error": e }) })
+                        }).catch(() => { return res.status(400).json({ "success": false, "message": "Sub-Category not found" }) })
+                }).catch(() => { return res.status(400).json({ "success": false, "message": "Category not found" }) })
+        })
+    },
 
+    deleteOrder: (req, res) => {
+        let token = req.headers['authorization'];
+        jwt.verify(token, secretKey, (err, decoded) => {
+            if (err || !decoded) { return res.status(403).json({ "success": false, "message": "Unauthorized access, invalid token" }) }
+            else if (decoded.user.user_type != 0) {
+                return res.status(401).json({ "succes": false, "message": "Only students can delete orders" });
+            }
+            const order = req.body.order;
+            Student.findOneAndUpdate({ userInfo: decoded.user._id }, { $pull: { orders: order } })
+                .then(() => {
+                    //ord is order object returned from this query
+                    Order.findOneAndDelete({ _id: order }, (error, done) => {
+                        if (error || !done) { return res.status(404).json({ "success": false, "message": "Unable to remove order,, not found" }) }
+                        return res.status(200).json({ "success": true, "message": "Order deleted successfully" });
+                    })
+
+                })
+                .catch(() => { return res.status(400).json({ "success": false, "message": "This order doesn't belong to this student" }) })
+        })
+    },
+
+    createWishListItem: (req, res) => {
+        let token = req.headers['authorization'];
+        jwt.verify(token, secretKey, (err, decoded) => {
+            if (err || !decoded) { return res.status(403).json({ "success": false, "message": "Unauthorized access, invalid token" }) }
+            else if (decoded.user.user_type != 0) {
+                return res.status(401).json({ "success": false, "message": "Only students can create wishlist items" });
+            }
+            const { warranty, information, service, deadline, quality, language } = req.body;
+            Sub.findOne({ name: service }, async (error, sub) => {
+                if (error) { return res.status(400).json({ "success": false, "message": "Service not found" }) }
+                const newWishListItem = new WishListItem({
+                    language: language,
+                    deadline: deadline,
+                    warranty: warranty,
+                    information: information,
+                    service: sub._id,
+                    quality: quality,
+                    user: decoded.user._id,
+                });
+                await newWishListItem.save()
+                    .then(() => { return res.status(201).json({ "success": true, "message": "Item created successfully" }) })
+                    .catch(() => { return res.status(400).json({ "success": false, "message": "Please fill all fields" }) });
+            })
+        })
+    }
 }

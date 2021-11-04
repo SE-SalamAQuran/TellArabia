@@ -14,8 +14,8 @@ module.exports = {
         let token = req.headers['authorization'];
         jwt.verify(token, secretKey, (e, decoded) => {
             if (e) { return res.status(403).json({ "success": false, "message": "Invalid access token" }) }
-            else if (decoded.user.user_type != 1) {
-                return res.status(401).json({ "success": false, "message": "Must be a freelancer to add an offer" })
+            else if (!decoded.user.is_admin) {
+                return res.status(401).json({ "success": false, "message": "Must be an admin to add an offer" })
             } else {
                 const { price, images, service, description } = req.body;
                 if (images.length === 0) {
