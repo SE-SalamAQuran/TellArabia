@@ -184,16 +184,27 @@ module.exports = {
                     .populate({
                         path: 'sub_categories',
                         populate: {
-                            path: 'offers'
-                        }
+                            path: 'offers',
+                            select: '-service -createdAt -addedBy -__v -updatedAt -orders'
+                        },
+
                     })
+                    .populate({
+                        path: 'sub_categories',
+                        populate: {
+                            path: 'parentCategory',
+                            select: 'name -_id'
+                        }
+                    }
+                    )
                     .exec(function (e, result) {
                         if (e) { return res.status(404).json({ "success": false, "message": "No services found", "Error": e }) }
                         let sub_arr = [];
                         result.forEach((item) => {
                             sub_arr.push(getRandom(item.sub_categories, 5));
                         });
-                        return res.status(200).json({ "success": true, "result": sub_arr });
+
+                        return res.status(200).json({ "success": true, "result": sub_arr.flat() });
                     });
             }
 
