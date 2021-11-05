@@ -14,20 +14,17 @@ function isTokenExpired(token) {
     const decodedJson = Buffer.from(payloadBase64, 'base64').toString();
     const decoded = JSON.parse(decodedJson)
     const exp = decoded.exp;
-    const expired = (Date.now() >= exp * 1000)
-    return expired
+    return Date.now() >= exp * 1000;
 }
 
 
 function isPhoneNumber(inputtxt) {
-    var phoneno = /^\+?([0-9]{3})\)?[-. ]?([0-9]{4})[-. ]?([0-9]{5})$/;
+    var phoneno = /^\+?(\d{3})\)?[-. ]?(\d{4})[-. ]?(\d{5})$/;
     var result = false;
     if ((inputtxt.match(phoneno))) {
         result = true;
     }
-    else {
-        result = false;
-    }
+
     return result;
 }
 
@@ -36,9 +33,6 @@ function isTelephone(inputtxt) {
     var result = false;
     if ((inputtxt.match(phoneno))) {
         result = true;
-    }
-    else {
-        result = false;
     }
     return result;
 }
@@ -205,7 +199,7 @@ module.exports = {
     },
     changePassword: async (req, res, next) => {
         const { newPassword, passConfirmation } = req.body;
-        token = req.headers['authorization'];
+        let token = req.headers['authorization'];
         jwt.verify(token, secretKey, function (e, decoded) {
             if (e) {
                 return res.status(403).json({ "success": false, "message": "Invalid bearer token" });

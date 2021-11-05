@@ -5,6 +5,7 @@ const Sub = require("../models/sub_category.model");
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv").config({});
 const secretKey = process.env.JWT_SECRET;
+const Lookup = require("../models/system.lookup.model");
 
 function getRandom(arr, n) {
     var result = new Array(n),
@@ -34,18 +35,39 @@ module.exports = {
                         url: url,
                         addedBy: user._id,
                     });
+                    const newServiceLookup = new Lookup({
+                        classification: name.toLowerCase().split(' ').join('_') + '_services',
+                    });
+                    const newRoleLookup = new Lookup({
+                        classification: name.toLowerCase().split(' ').join('_') + "_roles",
+                    })
+                    await newServiceLookup.save()
+                        .then(() => { console.log(`Added new Lookup for ${name} services`) })
+                        .catch((E) => {
+                            console.log(`Unable to add lookup for ${name} services`);
+                        });
+                    await newRoleLookup.save()
+                        .then(() => { console.log(`Added new Lookup for ${name} roles`) })
+                        .catch((E) => {
+                            console.log(`Unable to add lookup for ${name} roles`);
+                        });
                     await newCategory.save()
-                        .then((result) => {
+                        .then(async (result) => {
                             const newService = new Service({
                                 main_category: result._id,
                                 sub_categories: [],
                             });
-                            newService.save().then((service) => { return res.status(201).json({ "success": true, "message": "Service category added successfully", "result": service }) })
-                                .catch((insertError) => { return res.status(400).json({ "success": false, "message": "Error adding service, already exists", "error": insertError }) });
+
+                            Lookup.findOneAndUpdate({ classification: "main_services" }, { $addToSet: { values: result.name } })
+                                .exec(async (e, done) => {
+                                    if (e) { return res.status(400).json({ "success": false, "message": "Failed to update system lookup:  main_services" }) }
+
+                                    await newService.save().then((service) => { return res.status(201).json({ "success": true, "message": "Service category added successfully", "result": service }) })
+                                        .catch((insertError) => { return res.status(400).json({ "success": false, "message": "Error adding service, already exists", "error": insertError }) });
+                                });
+
                         }).catch((e) => { return res.status(400).json({ "success": false, "message": "Category already exists", "Error": e }) })
                 })
-
-
             }
         })
     },
@@ -89,6 +111,7 @@ module.exports = {
                         return res.status(403).json({ "success": false, "message": "Unauthorized access to admin feature" });
                     }
                     const { main, sub } = req.body;
+
                     Category.findOne({ name: main }, (e, category) => {
                         if (e || !category) { return res.status(400).json({ "success": false, "message": "You need to insert this category first" }) }
                         else {
@@ -99,13 +122,20 @@ module.exports = {
                                     const newSubCategory = new Sub({
                                         parentCategory: service.main_category,
                                         name: sub.name,
-                                        price: sub.price,
                                         image: sub.url,
                                         description: sub.description,
                                         addedBy: user._id,
                                     });
                                     await newSubCategory.save()
                                         .then((subCat) => {
+                                            //Filtered names of main category to find it's lookups
+                                            let filteredServiceName = main.toLowerCase().split(' ').join('_') + '_services';
+
+                                            Lookup.findOneAndUpdate({ classification: filteredServiceName }, { $addToSet: { values: sub.name } })
+                                                .then(() => {
+                                                    console.log(`Lookup updated for this service ${main}`);
+                                                })
+                                                .catch((error) => { console.log(`Lookup for this service ${main} wasn't updated`); })
                                             Service.findOneAndUpdate({ main_category: category._id }, { $addToSet: { sub_categories: subCat._id } }).exec(function (pushError, update) {
                                                 if (pushError) {
                                                     return res.status(400).json({ "success": false, "message": "Error updating service", "error": pushError });

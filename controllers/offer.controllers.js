@@ -14,9 +14,10 @@ module.exports = {
         let token = req.headers['authorization'];
         jwt.verify(token, secretKey, (e, decoded) => {
             if (e) { return res.status(403).json({ "success": false, "message": "Invalid access token" }) }
-            else if (!decoded.user.is_admin) {
-                return res.status(401).json({ "success": false, "message": "Must be an admin to add an offer" })
-            } else {
+            User.findOne({ _id: decoded.user._id }, (e, user) => {
+                if (e || !user.is_admin) {
+                    return res.status(401).json({ "success": false, "message": "Must be an admin to add an offer" })
+                }
                 const { price, images, service, description } = req.body;
                 if (images.length === 0) {
                     return res.status(400).json({ "success": true, "message": "You must add links to images of your previous work" })
@@ -36,9 +37,9 @@ module.exports = {
                                     });
                                     await newOffer.save()
                                         .then((offer) => {
-                                            Sub.findOneAndUpdate({ _id: result._id }, { $push: { offers: offer } })
+                                            Sub.findOneAndUpdate({ _id: result._id }, { $addToSet: { offers: offer } })
                                                 .then((done) => {
-                                                    Business.findOneAndUpdate({ userInfo: decoded.user._id }, { $push: { offers: offer } })
+                                                    Business.findOneAndUpdate({ userInfo: decoded.user._id }, { $addToSet: { offers: offer } })
                                                         .then((results) => {
                                                             return res.status(201).json({ "success": true, "message": "Successfully added offer" })
                                                         })
@@ -64,7 +65,8 @@ module.exports = {
                 else {
                     return res.status(400).json({ "success": false, "message": "Some fields are missing" })
                 }
-            }
+
+            })
         })
     },
     getAllOffers: async (req, res) => {

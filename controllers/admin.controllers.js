@@ -17,9 +17,7 @@ function isPhoneNumber(inputtxt) {
     if ((inputtxt.match(phoneno))) {
         result = true;
     }
-    else {
-        result = false;
-    }
+
     return result;
 }
 

@@ -111,9 +111,9 @@ module.exports = {
             });
             await newComplaint.save()
                 .then((complaint) => {
-                    User.findOneAndUpdate({ _id: decoded.user._id }, { $push: { complaints: complaint } }).exec(function (e, result) {
+                    User.findOneAndUpdate({ _id: decoded.user._id }, { $addToSet: { complaints: complaint } }).exec(function (e, result) {
                         if (e) return res.status(400).json({ "success": false, "message": "Unable to create new complaint" });
-                        User.findOneAndUpdate({ _id: accused }, { $push: { reports: complaint } }).exec(function (e, result) {
+                        User.findOneAndUpdate({ _id: accused }, { $addToSet: { reports: complaint } }).exec(function (e, result) {
                             if (e) return res.status(400).json({ "success": false, "message": "Unable to append report to this user" });
                             console.log("Complaint Successful");
                         })
@@ -213,11 +213,11 @@ module.exports = {
 
                 await newOrder.save()
                     .then((order) => {
-                        Offer.findOneAndUpdate({ _id: offer }, { $push: { orders: order } }).exec((error, offer) => {
+                        Offer.findOneAndUpdate({ _id: offer }, { $addToSet: { orders: order } }).exec((error, offer) => {
                             if (error) {
                                 return res.status(400).json({ "success": false, "message": "Can't add order on this offer" });
                             }
-                            Student.findOneAndUpdate({ userInfo: decoded.user._id }, { $push: { orders: order } }).exec(function (e, result) {
+                            Student.findOneAndUpdate({ userInfo: decoded.user._id }, { $addToSet: { orders: order } }).exec(function (e, result) {
                                 if (e) return res.status(400).json({ "success": false, "message": "Unable to add order to user" });
                                 return res.status(201).json({ "success": true, "message": "Successful order upload", "result": "Succeded", "user": decoded.user, "order": order });
                             })

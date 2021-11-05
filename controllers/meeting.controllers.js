@@ -20,7 +20,7 @@ module.exports = {
             });
             await newMeeting.save()
                 .then((meeting) => {
-                    User.findOneAndUpdate({ _id: decoded.user._id }, { $push: { meetings: meeting } }).exec(function (e, result) {
+                    User.findOneAndUpdate({ _id: decoded.user._id }, { $addToSet: { meetings: meeting } }).exec(function (e, result) {
                         if (e) return res.status(400).json({ "success": false, "message": "Unable to create new meeting" });
                         return res.status(201).json({ "success": true, "result": meeting })
                     })

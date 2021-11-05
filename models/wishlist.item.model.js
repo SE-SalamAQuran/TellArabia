@@ -9,7 +9,7 @@ const wishListItemSchema = new Schema({
     },
     status: {
         type: String,
-        enum: ["Pending", "In progress", "Removed", "Complete"],
+        enum: ["Pending", "In Progress", "Removed", "Complete"],
         default: "Pending",
     },
     language: {
