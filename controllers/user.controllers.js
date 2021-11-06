@@ -217,10 +217,8 @@ module.exports = {
                             if (error) {
                                 return res.status(400).json({ "success": false, "message": "Can't add order on this offer" });
                             }
-                            Student.findOneAndUpdate({ userInfo: decoded.user._id }, { $addToSet: { orders: order } }).exec(function (e, result) {
-                                if (e) return res.status(400).json({ "success": false, "message": "Unable to add order to user" });
-                                return res.status(201).json({ "success": true, "message": "Successful order upload", "result": "Succeded", "user": decoded.user, "order": order });
-                            })
+                            return res.status(201).json({ "success": true, "message": "Successful order upload", "result": "Succeded", "user": decoded.user, "order": order });
+
                         })
 
                     }).catch((e) => {
@@ -286,13 +284,24 @@ module.exports = {
                 return res.status(401).json({ "succes": false, "message": "Only students can delete orders" });
             }
             const order = req.body.order;
+            const type = req.body.type;
             Student.findOneAndUpdate({ userInfo: decoded.user._id }, { $pull: { orders: order } })
                 .then(() => {
                     //ord is order object returned from this query
-                    Order.findOneAndDelete({ _id: order }, (error, done) => {
-                        if (error || !done) { return res.status(404).json({ "success": false, "message": "Unable to remove order,, not found" }) }
-                        return res.status(200).json({ "success": true, "message": "Order deleted successfully" });
-                    })
+                    if (type != 0 && type != 1) {
+                        return res.status(400).json({ "success": false, "message": "Invalid order type" });
+                    } else if (type === 0) {
+                        Order.findOneAndDelete({ _id: order }, (error, done) => {
+                            if (error || !done) { return res.status(404).json({ "success": false, "message": "Unable to remove order, not found" }) }
+                            return res.status(200).json({ "success": true, "message": "Order deleted successfully" });
+                        });
+                    } else if (type === 1) {
+                        WishListItem.findOneAndDelete({ _id: order }, (e, deleted) => {
+                            if (e || !deleted) { return res.status(404).json({ "success": false, "message": "Unable to remove custom order, not found" }) }
+                            return res.status(200).json({ "success": true, "message": "Custom order deleted successfully" });
+                        });
+                    }
+
 
                 })
                 .catch(() => { return res.status(400).json({ "success": false, "message": "This order doesn't belong to this student" }) })

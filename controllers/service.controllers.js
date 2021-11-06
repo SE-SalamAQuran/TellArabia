@@ -40,16 +40,30 @@ module.exports = {
                     });
                     const newRoleLookup = new Lookup({
                         classification: name.toLowerCase().split(' ').join('_') + "_roles",
-                    })
+                    });
+                    const newFieldLookup = new Lookup({
+                        classification: name.toLowerCase().split(' ').join('_') + "_fields",
+                    });
+
                     await newServiceLookup.save()
                         .then(() => { console.log(`Added new Lookup for ${name} services`) })
                         .catch((E) => {
                             console.log(`Unable to add lookup for ${name} services`);
+                            return res.status(400).json({ "success": false, "message": "Failed to create services lookup" });
+
                         });
                     await newRoleLookup.save()
                         .then(() => { console.log(`Added new Lookup for ${name} roles`) })
                         .catch((E) => {
                             console.log(`Unable to add lookup for ${name} roles`);
+                            return res.status(400).json({ "success": false, "message": "Failed to create roles lookup" });
+
+                        });
+                    await newFieldLookup.save()
+                        .then(() => { console.log(`Added new Lookup for ${name} fields`) })
+                        .catch((E) => {
+                            console.log(`Unable to add lookup for ${name} fields`);
+                            return res.status(400).json({ "success": false, "message": "Failed to create fields lookup" })
                         });
                     await newCategory.save()
                         .then(async (result) => {
