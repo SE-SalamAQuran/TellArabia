@@ -54,4 +54,19 @@ router.patch("/update", (req, res) => {
 
 });
 
+router.get("/all", async (req, res) => {
+    let token = req.headers['authorization'];
+    jwt.verify(token, secretKey, (err, decoded) => {
+        if (err || !decoded) {
+            return res.status(403).json({ "success": false, "message": "Invalid Access Token" });
+        }
+        Lookup.find({}, (e, lookups) => {
+            if (e || !lookups) {
+                return res.status(400).json({ "success": false, "message": "Unable to fetch system lookups" });
+            }
+            return res.status(200).json({ "success": true, "result": lookups });
+        }).select('-__v -_id -createdAt -updatedAt');
+    })
+})
+
 module.exports = router;
