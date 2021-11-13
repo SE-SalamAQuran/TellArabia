@@ -60,9 +60,9 @@ module.exports = {
                 else if (!user.is_admin) {
                     return res.status(403).json({ "success": false, "message": "Invalid access to admin feature" });
                 }
-                Complaint.find({}).populate('order').populate('complainant').populate('accused').exec((error, result) => {
+                Complaint.find({}).select('-createdAt -updatedAt -__v').populate({ path: 'order', select: "details status deadline language confirmed" }).populate({ path: 'complainant', select: "-createdAt -updatedAt -__v -is_admin -is_active -meetings" }).exec((error, result) => {
                     if (error) {
-                        return res.status(400).json({ "success": false, "message": "Error Fetching Orders' Data", "Error": error });
+                        return res.status(400).json({ "success": false, "message": "Error Fetching Complaints' Data", "Error": error });
                     }
                     return res.status(200).json({ "success": true, "complaints": result });
                 })

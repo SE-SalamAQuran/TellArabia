@@ -74,7 +74,7 @@ module.exports = {
             const client = decoded.user;
             WishListItem.find({ user: client._id }).populate({ path: 'service', select: 'name' })
                 .then((customs) => {
-                    Order.find({ user: client._id }).populate('offer', '-orders -service -__v -createdAt -updatedAt -addedBy -_id')
+                    Order.find({ user: client._id }).populate('offer', '-orders -service -__v -createdAt -updatedAt -complaints -addedBy -_id')
                         .then((orders) => {
                             return res.status(200).json({ "success": true, "result": { "orders_on_offers": orders, "custom_orders": customs } });
                         }).catch(() => {
@@ -97,33 +97,74 @@ module.exports = {
     },
     addComplaint: async (req, res) => {
         let token = req.headers['authorization'];
-        const { date, details, order, accused } = req.body;
-        jwt.verify(token, secretKey, async (err, decoded) => {
+        jwt.verify(token, secretKey, (err, decoded) => {
             if (err) {
                 return res.status(403).json({ "success": false, "message": "Unauthorized access, invalid access token" });
             }
-            const newComplaint = new Complaint({
-                complainant: decoded.user._id,
-                date: date,
-                details: details,
-                order: order,
-                accused: accused,
-            });
-            await newComplaint.save()
-                .then((complaint) => {
-                    User.findOneAndUpdate({ _id: decoded.user._id }, { $addToSet: { complaints: complaint } }).exec(function (e, result) {
-                        if (e) return res.status(400).json({ "success": false, "message": "Unable to create new complaint" });
-                        User.findOneAndUpdate({ _id: accused }, { $addToSet: { reports: complaint } }).exec(function (e, result) {
-                            if (e) return res.status(400).json({ "success": false, "message": "Unable to append report to this user" });
-                            console.log("Complaint Successful");
+            else if (decoded.user.user_type != 0) {
+                return res.status(401).json({ "success": false, "message": "Only students are allowed to submit complaints about orders" })
+            }
+
+
+            const { details, order, order_type } = req.body;
+            if (order_type != 0 && order_type != 1) {
+                return res.status(400).json({ "success": false, "message": "Please specify a valid order type" });
+            } else if (order_type === 0) {
+
+                Order.findOne({ _id: order }, async (e, o) => {
+                    if (e || !o) {
+                        return res.status(400).json({ "success": false, "message": "Order not found" });
+                    } else if (o.user != decoded.user._id) {
+                        return res.status(400).json({ "success": false, "message": "This order doesn't belong to the this user" });
+                    }
+                    const newComplaint = new Complaint({
+                        complainant: decoded.user._id,
+                        details: details,
+                        order: order
+                    });
+                    await newComplaint.save()
+                        .then((complaint) => {
+                            Student.findOneAndUpdate({ userInfo: decoded.user._id }, { $addToSet: { complaints: complaint } }).exec(function (e, result) {
+                                if (e) return res.status(400).json({ "success": false, "message": "Unable to create new complaint" });
+                                Order.findOneAndUpdate({ _id: order }, { $addToSet: { complaints: complaint } }).exec(function (e, result) {
+                                    if (e) return res.status(400).json({ "success": false, "message": "Unable to append report to this order" });
+                                    console.log("Complaint Successful");
+                                })
+                                return res.status(201).json({ "success": true, "result": complaint })
+                            })
+
                         })
-                        return res.status(201).json({ "success": true, "result": complaint })
-                    })
+                        .catch((e) => { return res.status(400).json({ "success": false, "message": "Invalid fields, check values and try again", "err": e }) });
+                });
+            } else if (order_type === 1) {
 
-                })
-                .catch((e) => { return res.status(400).json({ "success": false, "message": "Invalid fields, check values and try again", "err": e }) });
-        })
+                WishListItem.findOne({ _id: order }, async (e, wish) => {
+                    if (e || !wish) {
+                        return res.status(400).json({ "success": false, "message": "Custom order not found" });
+                    } else if (o.user != decoded.user._id) {
+                        return res.status(400).json({ "success": false, "message": "This custom order doesn't belong to the this user" });
+                    }
+                    const newComplaint = new Complaint({
+                        complainant: decoded.user._id,
+                        details: details,
+                        order: order
+                    });
+                    await newComplaint.save()
+                        .then((complaint) => {
+                            Student.findOneAndUpdate({ userInfo: decoded.user._id }, { $addToSet: { complaints: complaint } }).exec(function (e, result) {
+                                if (e) return res.status(400).json({ "success": false, "message": "Unable to create new complaint" });
+                                wishlistItemM.findOneAndUpdate({ _id: order }, { $addToSet: { complaints: complaint } }).exec(function (e, result) {
+                                    if (e) return res.status(400).json({ "success": false, "message": "Unable to append report to this order" });
+                                    console.log("Complaint Successful");
+                                })
+                                return res.status(201).json({ "success": true, "result": complaint })
+                            })
 
+                        })
+                        .catch((e) => { return res.status(400).json({ "success": false, "message": "Invalid fields, check values and try again", "err": e }) });
+                });
+            }
+        });
     },
     getComplaints: async (req, res) => {
         let token = req.headers['authorization'];
@@ -131,7 +172,7 @@ module.exports = {
             if (err) {
                 return res.status(403).json({ "success": false, "message": "Unauthorized access, invalid access token" })
             }
-            Complaint.find({ complainant: decoded.user._id }).populate('accused').populate('order').exec((e, complaints) => {
+            Complaint.find({ complainant: decoded.user._id }).select('-complainant -createdAt -updatedAt -__v').populate({ path: 'order', select: "details status deadline language confirmed" }).exec((e, complaints) => {
                 if (e) return res.status(404).json({ "success": false, "message": "User not found in the DB!" });
                 return res.status(200).json({ "success": true, "result": complaints });
             })

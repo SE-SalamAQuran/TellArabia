@@ -31,6 +31,11 @@ const studentSchema = new Schema({
     userInfo: {
         type: mongoose.Types.ObjectId,
         ref: 'User',
+    },
+    complaints: {
+        type: [mongoose.Types.ObjectId],
+        ref: "Complaint",
+        default: []
     }
 
 }, { timestamps: true })

@@ -44,14 +44,10 @@ const userSchema = new Schema({
         ref: 'Meeting',
         default: [],
     },
-    complaints: {
-        type: [mongoose.Types.ObjectId],
-        ref: 'Complaint',
-        default: [],
-    },
+
     user_type: {
         type: Number,
-        enum: [0, 1, 2], // 0: student, 1: business / freelancer, 2: Employee 
+        enum: [0, 1, 2], // 0: student, 1: freelancer, 2: Investor 
     },
     is_active: {
         type: Boolean,
@@ -65,11 +61,7 @@ const userSchema = new Schema({
         type: String,
         default: "https://firebasestorage.googleapis.com/v0/b/tellarabia-e4031.appspot.com/o/App%20Images%2Fmockup.jpg?alt=media&token=3a7a8dc4-1126-4b54-8210-3695a24f51df"
     },
-    reports: {
-        type: [mongoose.Types.ObjectId],
-        ref: 'Complaints',
-        default: []
-    }
+
 
 }, { timestamps: true })
 

@@ -39,6 +39,11 @@ const wishListItemSchema = new Schema({
         type: mongoose.Types.ObjectId,
         ref: 'User',
         required: true
+    },
+    complaints: {
+        type: [mongoose.Types.ObjectId],
+        ref: "Complaint",
+        default: []
     }
 }, { timestamps: true });
 

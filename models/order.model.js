@@ -34,6 +34,11 @@ const orderSchema = new Schema({
     confirmed: {
         type: Boolean,
         default: false,
+    },
+    complaints: {
+        type: [mongoose.Types.ObjectId],
+        ref: "Complaint",
+        default: []
     }
 
 }, { timestamps: true });

@@ -8,7 +8,7 @@ const complaintSchema = new Schema({
     },
     date: {
         type: String,
-        required: true,
+        default: new Date().toISOString().slice(0, 10),
     },
     details: {
         type: String,
@@ -19,13 +19,9 @@ const complaintSchema = new Schema({
         ref: 'User',
     },
     status: {
-        type: "String",
+        type: String,
         enum: ["Pending", "In Progress", "Resolved", "Closed"],
         default: "Pending"
-    },
-    accused: {
-        type: mongoose.Types.ObjectId,
-        ref: 'User',
     }
 
 }, { timestamps: true });
