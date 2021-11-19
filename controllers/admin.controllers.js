@@ -5,6 +5,7 @@ const Complaint = require("../models/complaint.model");
 const Service = require("../models/service.model");
 const Student = require("../models/student.model");
 const Business = require("../models/business.model");
+const Sub = require("../models/sub_category.model");
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv").config({});
 const secretKey = process.env.JWT_SECRET;
@@ -37,7 +38,7 @@ module.exports = {
                 else if (!user.is_admin) {
                     return res.status(403).json({ "success": false, "message": "Invalid access to admin feature" });
                 }
-                Order.find({}).populate('user').populate('offer').exec((error, result) => {
+                Order.find({}).populate({ path: 'user', select: 'name phone city country' }).populate({ path: 'offer', select: 'price title likes service -description -__v -createdAt -updatedAt' }).populate({ path: 'offer', populate: { path: 'service', select: 'name' } }).select('-__v -createdAt -updatedAt').exec((error, result) => {
                     if (error) {
                         return res.status(400).json({ "success": false, "message": "Error Fetching Orders' Data" });
                     }
@@ -107,9 +108,9 @@ module.exports = {
                 else if (!user.is_admin) {
                     return res.status(403).json({ "success": false, "message": "Invalid access to admin feature" });
                 }
-                Service.find({}).populate('addedBy').exec((error, result) => {
+                Sub.find({}).populate({ path: 'parentCategory', select: "name" }).select('-__v -createdAt -updatedAt').exec((error, result) => {
                     if (error) {
-                        return res.status(400).json({ "success": false, "message": "Error Fetching Orders' Data" });
+                        return res.status(400).json({ "success": false, "message": "Error Fetching Services' Data" });
                     }
                     return res.status(200).json({ "success": true, "services": result });
                 })

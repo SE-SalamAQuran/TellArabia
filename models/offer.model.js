@@ -4,7 +4,7 @@ const Schema = mongoose.Schema;
 const offerSchema = new Schema({
     addedBy: {
         type: mongoose.Types.ObjectId,
-        ref: "Business",
+        ref: "User",
     },
     title: {
         type: String,
