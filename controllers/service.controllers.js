@@ -6,6 +6,67 @@ const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv").config({});
 const secretKey = process.env.JWT_SECRET;
 const Lookup = require("../models/system.lookup.model");
+const multer = require("multer");
+const { Storage } = require('@google-cloud/storage');
+
+
+const storage = new Storage({
+    projectId: process.env.GCLOUD_PROJECT_ID,
+    keyFilename: process.env.GCLOUD_APPLICATION_CREDENTIALS,
+});
+const uploader = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+        fileSize: 10 * 1024 * 1024, // keep images size < 10 MB
+    },
+});
+const bucket = storage.bucket(process.env.GCLOUD_STORAGE_BUCKET_URL);
+
+function uploadFile(file) {
+    uploader.single("file");
+    var downloadUrl = "";
+    try {
+        if (!file) {
+            console.log('Error, could not upload file');
+            return;
+        }
+
+
+        // Create new blob in the bucket referencing the file
+        const blob = bucket.file(file.name);
+
+        // Create writable stream and specifying file mimetype
+        const blobWriter = blob.createWriteStream({
+            metadata: {
+                contentType: file.mimetype,
+            },
+        });
+
+        blobWriter.on('error', (err) => next(err));
+
+        blobWriter.on('finish', async (url) => {
+            // Assembling public URL for accessing the file via HTTP
+
+
+            url['ref'] += `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURI(blob.name)}?alt=media`;
+
+
+
+
+            // Return the file name and its public URL
+        });
+
+        const url = { ref: "" };
+        blobWriter.emit('finish', url);
+        blobWriter.end(file.data);
+        return url['ref'];
+        // When there is no more data to be consumed from the stream
+
+    } catch (error) {
+        console.log(`Error, could not upload file: ${error}`);
+        return error;
+    }
+}
 
 function getRandom(arr, n) {
     var result = new Array(n),
@@ -29,10 +90,13 @@ module.exports = {
                 User.findOne({ _id: decoded.user._id }, async (error, user) => {
                     if (error) { return res.status(400).json({ "success": false, "message": "Unable to find user" }) }
                     else if (!user.is_admin) { return res.status(403).json({ "success": false, "message": "Unauthorized access to admin feature" }) }
-                    const { name, url } = req.body;
+                    const name = req.body.name;
+                    console.log(name);
+                    const downLoadUrl = uploadFile(req.files.file);
+                    console.log(downLoadUrl);
                     const newCategory = new Category({
                         name: name,
-                        url: url,
+                        url: downLoadUrl,
                         addedBy: user._id,
                     });
                     const newServiceLookup = new Lookup({
@@ -49,21 +113,21 @@ module.exports = {
                         .then(() => { console.log(`Added new Lookup for ${name} services`) })
                         .catch((E) => {
                             console.log(`Unable to add lookup for ${name} services`);
-                            return res.status(400).json({ "success": false, "message": "Failed to create services lookup" });
+                            return;
 
                         });
                     await newRoleLookup.save()
                         .then(() => { console.log(`Added new Lookup for ${name} roles`) })
                         .catch((E) => {
                             console.log(`Unable to add lookup for ${name} roles`);
-                            return res.status(400).json({ "success": false, "message": "Failed to create roles lookup" });
+                            return;
 
                         });
                     await newFieldLookup.save()
                         .then(() => { console.log(`Added new Lookup for ${name} fields`) })
                         .catch((E) => {
                             console.log(`Unable to add lookup for ${name} fields`);
-                            return res.status(400).json({ "success": false, "message": "Failed to create fields lookup" })
+                            return;
                         });
                     await newCategory.save()
                         .then(async (result) => {
