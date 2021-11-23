@@ -91,60 +91,87 @@ module.exports = {
                     if (error) { return res.status(400).json({ "success": false, "message": "Unable to find user" }) }
                     else if (!user.is_admin) { return res.status(403).json({ "success": false, "message": "Unauthorized access to admin feature" }) }
                     const name = req.body.name;
-                    console.log(name);
-                    const downLoadUrl = uploadFile(req.files.file);
-                    console.log(downLoadUrl);
-                    const newCategory = new Category({
-                        name: name,
-                        url: downLoadUrl,
-                        addedBy: user._id,
-                    });
-                    const newServiceLookup = new Lookup({
-                        classification: name.toLowerCase().split(' ').join('_') + '_services',
-                    });
-                    const newRoleLookup = new Lookup({
-                        classification: name.toLowerCase().split(' ').join('_') + "_roles",
-                    });
-                    const newFieldLookup = new Lookup({
-                        classification: name.toLowerCase().split(' ').join('_') + "_fields",
+                    const file = req.files.file;
+
+                    if (!file) {
+                        console.log('Error, could not upload file');
+                        return res.status(400).json({ "success": false, "message": "File is required" });
+                    }
+
+
+                    // Create new blob in the bucket referencing the file
+                    const blob = bucket.file(file.name);
+
+                    // Create writable stream and specifying file mimetype
+                    const blobWriter = blob.createWriteStream({
+                        metadata: {
+                            contentType: file.mimetype,
+                        },
                     });
 
-                    await newServiceLookup.save()
-                        .then(() => { console.log(`Added new Lookup for ${name} services`) })
-                        .catch((E) => {
-                            console.log(`Unable to add lookup for ${name} services`);
-                            return;
+                    blobWriter.on('error', (err) => { console.log("ERROR", err) });
 
+                    blobWriter.on('finish', async () => {
+                        // Assembling public URL for accessing the file via HTTP
+                        const url = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURI(blob.name)}?alt=media`;
+                        const newCategory = new Category({
+                            name: name,
+                            url: url,
+                            addedBy: user._id,
                         });
-                    await newRoleLookup.save()
-                        .then(() => { console.log(`Added new Lookup for ${name} roles`) })
-                        .catch((E) => {
-                            console.log(`Unable to add lookup for ${name} roles`);
-                            return;
+                        const newServiceLookup = new Lookup({
+                            classification: name.toLowerCase().split(' ').join('_') + '_services',
+                        });
+                        const newRoleLookup = new Lookup({
+                            classification: name.toLowerCase().split(' ').join('_') + "_roles",
+                        });
+                        const newFieldLookup = new Lookup({
+                            classification: name.toLowerCase().split(' ').join('_') + "_fields",
+                        });
 
-                        });
-                    await newFieldLookup.save()
-                        .then(() => { console.log(`Added new Lookup for ${name} fields`) })
-                        .catch((E) => {
-                            console.log(`Unable to add lookup for ${name} fields`);
-                            return;
-                        });
-                    await newCategory.save()
-                        .then(async (result) => {
-                            const newService = new Service({
-                                main_category: result._id,
-                                sub_categories: [],
+                        await newServiceLookup.save()
+                            .then(() => { console.log(`Added new Lookup for ${name} services`) })
+                            .catch((E) => {
+                                console.log(`Unable to add lookup for ${name} services`);
+                                return;
+
                             });
+                        await newRoleLookup.save()
+                            .then(() => { console.log(`Added new Lookup for ${name} roles`) })
+                            .catch((E) => {
+                                console.log(`Unable to add lookup for ${name} roles`);
+                                return;
 
-                            Lookup.findOneAndUpdate({ classification: "main_services" }, { $addToSet: { values: result.name } })
-                                .exec(async (e, done) => {
-                                    if (e) { return res.status(400).json({ "success": false, "message": "Failed to update system lookup:  main_services" }) }
-
-                                    await newService.save().then((service) => { return res.status(201).json({ "success": true, "message": "Service category added successfully", "result": service }) })
-                                        .catch((insertError) => { return res.status(400).json({ "success": false, "message": "Error adding service, already exists", "error": insertError }) });
+                            });
+                        await newFieldLookup.save()
+                            .then(() => { console.log(`Added new Lookup for ${name} fields`) })
+                            .catch((E) => {
+                                console.log(`Unable to add lookup for ${name} fields`);
+                                return;
+                            });
+                        await newCategory.save()
+                            .then(async (result) => {
+                                const newService = new Service({
+                                    main_category: result._id,
+                                    sub_categories: [],
                                 });
 
-                        }).catch((e) => { return res.status(400).json({ "success": false, "message": "Category already exists", "Error": e }) })
+                                Lookup.findOneAndUpdate({ classification: "main_services" }, { $addToSet: { values: result.name } })
+                                    .exec(async (e, done) => {
+                                        if (e) { return res.status(400).json({ "success": false, "message": "Failed to update system lookup:  main_services" }) }
+
+                                        await newService.save().then((service) => { return res.status(201).json({ "success": true, "message": "Service category added successfully", "result": service }) })
+                                            .catch((insertError) => { return res.status(400).json({ "success": false, "message": "Error adding service, already exists", "error": insertError }) });
+                                    });
+
+                            }).catch((e) => { return res.status(400).json({ "success": false, "message": "Category already exists", "Error": e }) })
+
+
+                        // Return the file name and its public URL
+                    });
+                    blobWriter.end(file.data);
+
+
                 })
             }
         })

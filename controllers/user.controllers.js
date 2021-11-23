@@ -19,8 +19,14 @@ function deleteUserMeetings(id) {
         .catch((e) => { console.log(e) });
 }
 
+function deleteOrderComplaints(id) {
+    Complaint.deleteMany({ order: id })
+        .then((res) => { console.log(res) })
+        .catch((err) => { console.log(err) });
+}
+
 function deleteUserComplaints(id) {
-    Complaint.deleteMany({ user: id })
+    Complaint.deleteMany({ complainant: id })
         .then((res) => { console.log(res) })
         .catch((err) => { console.log(err) });
 }
@@ -334,11 +340,13 @@ module.exports = {
                     } else if (type === 0) {
                         Order.findOneAndDelete({ _id: order }, (error, done) => {
                             if (error || !done) { return res.status(404).json({ "success": false, "message": "Unable to remove order, not found" }) }
+                            deleteOrderComplaints(order);
                             return res.status(200).json({ "success": true, "message": "Order deleted successfully" });
                         });
                     } else if (type === 1) {
                         WishListItem.findOneAndDelete({ _id: order }, (e, deleted) => {
                             if (e || !deleted) { return res.status(404).json({ "success": false, "message": "Unable to remove custom order, not found" }) }
+                            deleteOrderComplaints(order);
                             return res.status(200).json({ "success": true, "message": "Custom order deleted successfully" });
                         });
                     }
