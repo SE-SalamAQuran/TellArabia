@@ -109,7 +109,11 @@ module.exports = {
                         },
                     });
 
-                    blobWriter.on('error', (err) => { console.log("ERROR", err) });
+                    blobWriter.on('error', (err) => {
+                        console.log("ERROR", err)
+                        return res.status(400).json({ "success": false, "message": "File invalid, corrupted or greater than 10MB" });
+
+                    });
 
                     blobWriter.on('finish', async () => {
                         // Assembling public URL for accessing the file via HTTP
@@ -205,7 +209,9 @@ module.exports = {
             }
         })
     },
+
     addNewService: async (req, res) => {
+
         let token = req.headers['authorization'];
         jwt.verify(token, secretKey, (err, decoded) => {
             if (err) { return res.status(403).json({ "success": false, "message": "Invalid access token" }) }
@@ -215,20 +221,44 @@ module.exports = {
                     else if (!user.is_admin) {
                         return res.status(403).json({ "success": false, "message": "Unauthorized access to admin feature" });
                     }
-                    const { main, sub } = req.body;
+                    const { main, sub, description } = req.body;
+                    const file = req.files.file;
+                    if (!file) {
+                        console.log('Error, could not upload file');
+                        return res.status(400).json({ "success": false, "message": "Icon is required" });
+                    }
+
+
+                    // Create new blob in the bucket referencing the file
+                    const blob = bucket.file(file.name);
+
+                    // Create writable stream and specifying file mimetype
+                    const blobWriter = blob.createWriteStream({
+                        metadata: {
+                            contentType: file.mimetype,
+                        },
+                    });
+                    blobWriter.on('error', (err) => {
+                        console.log("ERROR", err)
+                        return res.status(400).json({ "success": false, "message": "File invalid, corrupted or greater than 10MB" });
+                    });
+
+
 
                     Category.findOne({ name: main }, (e, category) => {
                         if (e || !category) { return res.status(400).json({ "success": false, "message": "You need to insert this category first" }) }
                         else {
                             Service.findOne({ main_category: category._id }, async (error, service) => {
-                                if (error) {
+                                if (error || !service) {
                                     return res.status(400).json({ "success": false, "message": "Unable to add new service" })
-                                } else {
+                                }
+                                blobWriter.on('finish', async () => {
+                                    const url = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURI(blob.name)}?alt=media`;
                                     const newSubCategory = new Sub({
                                         parentCategory: service.main_category,
-                                        name: sub.name,
-                                        image: sub.url,
-                                        description: sub.description,
+                                        name: sub,
+                                        image: url,
+                                        description: description,
                                         addedBy: user._id,
                                     });
                                     await newSubCategory.save()
@@ -245,14 +275,16 @@ module.exports = {
                                                 if (pushError) {
                                                     return res.status(400).json({ "success": false, "message": "Error updating service", "error": pushError });
                                                 }
-                                                return res.status(202).json({ "success": true, "message": "Service added successfully" });
+                                                return res.status(201).json({ "success": true, "message": "Service added successfully" });
                                             })
                                         })
                                         .catch((insertError) => {
                                             return res.status(400).json({ "success": false, "message": "Error adding sub category, already exists", "error": insertError });
                                         })
-                                }
+                                });
+                                blobWriter.end(file.data);
                             })
+
                         }
                     })
                 })
