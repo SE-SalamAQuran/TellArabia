@@ -275,6 +275,7 @@ module.exports = {
                                                     return res.status(400).json({ "success": false, "message": "Error updating service", "error": pushError });
                                                 }
                                                 console.log(`Service Created: ${sub}`);
+                                                return res.status(201).json({ "success": true, "message": "Service added successfully" });
 
                                             })
                                         })
@@ -287,7 +288,6 @@ module.exports = {
 
                         }
                     })
-                    return res.status(201).json({ "success": true, "message": "Service added successfully" });
 
                 })
             }
