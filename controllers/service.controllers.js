@@ -211,7 +211,6 @@ module.exports = {
     },
 
     addNewService: async (req, res) => {
-
         let token = req.headers['authorization'];
         jwt.verify(token, secretKey, (err, decoded) => {
             if (err) { return res.status(403).json({ "success": false, "message": "Invalid access token" }) }
@@ -223,7 +222,7 @@ module.exports = {
                     }
                     const { main, sub, description } = req.body;
                     const file = req.files.file;
-                    if (!file) {
+                    if (!file || !req.files) {
                         console.log('Error, could not upload file');
                         return res.status(400).json({ "success": false, "message": "Icon is required" });
                     }
@@ -275,7 +274,8 @@ module.exports = {
                                                 if (pushError) {
                                                     return res.status(400).json({ "success": false, "message": "Error updating service", "error": pushError });
                                                 }
-                                                return res.status(201).json({ "success": true, "message": "Service added successfully" });
+                                                console.log(`Service Created: ${sub}`);
+
                                             })
                                         })
                                         .catch((insertError) => {
@@ -287,6 +287,8 @@ module.exports = {
 
                         }
                     })
+                    return res.status(201).json({ "success": true, "message": "Service added successfully" });
+
                 })
             }
         })
