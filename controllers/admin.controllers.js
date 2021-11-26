@@ -10,7 +10,7 @@ const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv").config({});
 const secretKey = process.env.JWT_SECRET;
 const bcrypt = require('bcryptjs');
-
+const Application = require("../models/application.model");
 
 function isPhoneNumber(inputtxt) {
     var phoneno = /^\+?([0-9]{3})\)?[-. ]?([0-9]{4})[-. ]?([0-9]{5})$/;
@@ -159,6 +159,28 @@ module.exports = {
                 }
             })
         });
-    }
+    },
+    fetchJobApplications: (req, res) => {
+        let token = req.headers['authorization'];
+        jwt.verify(token, secretKey, (err, decoded) => {
+            if (err) { return res.status(403).json({ "success": false, "message": "Invalid Bearer Token" }); }
+            const client = decoded.user;
+            User.findOne({ _id: client._id }, (e, user) => {
+                if (e) { return res.status(400).json({ "success": false, "message": "Error Fetching User" }); }
+                else if (!user) {
+                    return res.status(403).json({ "success": false, "message": "User not found" });
 
+                }
+                else if (!user.is_admin) {
+                    return res.status(403).json({ "success": false, "message": "Invalid access to admin feature" });
+                }
+                Application.find({}).populate({ path: 'freelancer', select: "name phone address city country" }).populate({ path: "category", select: "name" }).populate({ path: "field", select: "name" }).select('-__v -createdAt -updatedAt').exec((error, result) => {
+                    if (error) {
+                        return res.status(400).json({ "success": false, "message": "Error Fetching Job Applications" });
+                    }
+                    return res.status(200).json({ "success": true, "applications": result });
+                })
+            })
+        })
+    }
 }

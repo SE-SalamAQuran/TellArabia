@@ -4,7 +4,7 @@ const Schema = mongoose.Schema;
 const jobApplicationSchema = new Schema({
     freelancer: {
         type: mongoose.Types.ObjectId,
-        ref: 'Business',
+        ref: 'User',
     },
     resume: {
         type: String, //Url of CV file stored in Firebase
