@@ -30,11 +30,7 @@ const businessSchema = new Schema({ //Freelancer Schema
         },
     },
 
-    offers: {
-        type: [mongoose.Types.ObjectId],
-        ref: 'Offer',
-        default: [],
-    },
+
     userInfo: { //Contains address + other info stored in user model
         type: mongoose.Types.ObjectId,
         ref: 'User',

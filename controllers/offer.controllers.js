@@ -9,7 +9,7 @@ const dotenv = require("dotenv").config({});
 const secretKey = process.env.JWT_SECRET;
 const multer = require("multer");
 const { Storage } = require('@google-cloud/storage');
-
+const Order = require("../models/order.model");
 
 const storage = new Storage({
     projectId: process.env.GCLOUD_PROJECT_ID,
@@ -112,7 +112,7 @@ module.exports = {
                 }
                 Offer.find({})
                     .populate({ path: "service", select: 'name' })
-                    .select("-addedBy -__v -updatedAt -createdAt")
+                    .select("-addedBy -__v -updatedAt")
                     .exec(function (err, offers) {
                         if (err) { return res.status(404).json({ "success": false, "message": "No offers found!" }) }
 
@@ -211,5 +211,5 @@ module.exports = {
                 return res.status(400).json({ "success": false, "message": "Unable to like this offer" });
             })
         })
-    }
+    },
 }
