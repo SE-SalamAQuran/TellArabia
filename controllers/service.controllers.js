@@ -90,6 +90,9 @@ module.exports = {
                 User.findOne({ _id: decoded.user._id }, async (error, user) => {
                     if (error) { return res.status(400).json({ "success": false, "message": "Unable to find user" }) }
                     else if (!user.is_admin) { return res.status(403).json({ "success": false, "message": "Unauthorized access to admin feature" }) }
+                    if (!req.files) {
+                        return res.status(400).json({ "success": false, "message": "Icon is required" });
+                    }
                     const name = req.body.name;
                     const file = req.files.file;
 
@@ -174,9 +177,7 @@ module.exports = {
                         // Return the file name and its public URL
                     });
                     blobWriter.end(file.data);
-
-
-                })
+                });
             }
         })
     },
@@ -220,9 +221,12 @@ module.exports = {
                     else if (!user.is_admin) {
                         return res.status(403).json({ "success": false, "message": "Unauthorized access to admin feature" });
                     }
+                    if (!req.files) {
+                        return res.status(400).json({ "success": false, "message": "Icon is required" });
+                    }
                     const { main, sub, description } = req.body;
                     const file = req.files.file;
-                    if (!file || !req.files) {
+                    if (!file) {
                         console.log('Error, could not upload file');
                         return res.status(400).json({ "success": false, "message": "Icon is required" });
                     }

@@ -37,6 +37,9 @@ module.exports = {
                     return res.status(401).json({ "success": false, "message": "Must be an admin to add an offer" })
                 }
                 const { price, service, description } = req.body;
+                if (!req.files) {
+                    return res.status(400).json({ "success": false, "message": "You must add images" });
+                }
                 const images = req.files.images;
 
                 if (images.length === 0) {
@@ -108,22 +111,14 @@ module.exports = {
                     return res.status(401).json({ "success": false, "message": "Must be an admin to add an offer" })
                 }
                 Offer.find({})
-                    .populate({ path: "service", 'select': 'name' })
-                    .populate("addedBy")
-                    .populate({
-                        path: 'addedBy',
-                        populate: {
-                            path: 'userInfo'
-                        }
-                    })
+                    .populate({ path: "service", select: 'name' })
+                    .select("-addedBy -__v -updatedAt -createdAt")
                     .exec(function (err, offers) {
                         if (err) { return res.status(404).json({ "success": false, "message": "No offers found!" }) }
 
                         return res.status(200).json({ "success": true, "result": offers });
                     })
-
             })
-
         })
     },
     getOffersByService: async (req, res) => {

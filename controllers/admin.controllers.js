@@ -11,6 +11,23 @@ const dotenv = require("dotenv").config({});
 const secretKey = process.env.JWT_SECRET;
 const bcrypt = require('bcryptjs');
 const Application = require("../models/application.model");
+const multer = require("multer");
+const { Storage } = require('@google-cloud/storage');
+
+
+const storage = new Storage({
+    projectId: process.env.GCLOUD_PROJECT_ID,
+    keyFilename: process.env.GCLOUD_APPLICATION_CREDENTIALS,
+});
+const uploader = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+        fileSize: 10 * 1024 * 1024, // keep images size < 10 MB
+    },
+});
+
+const bucket = storage.bucket(process.env.GCLOUD_STORAGE_BUCKET_URL);
+
 
 function isPhoneNumber(inputtxt) {
     var phoneno = /^\+?([0-9]{3})\)?[-. ]?([0-9]{4})[-. ]?([0-9]{5})$/;
@@ -182,5 +199,59 @@ module.exports = {
                 })
             })
         })
+    },
+
+    updatePicture: (req, res) => {
+        let token = req.headers['authorization'];
+        jwt.verify(token, secretKey, (err, decoded) => {
+            if (err) { return res.status(403).json({ "success": false, "message": "Invalid Bearer Token" }); }
+            const client = decoded.user;
+            User.findOne({ _id: client._id }, (e, user) => {
+                if (e) { return res.status(400).json({ "success": false, "message": "Error Fetching User" }); }
+                else if (!user) {
+                    return res.status(403).json({ "success": false, "message": "User not found" });
+                }
+                else if (!user.is_admin) {
+                    return res.status(403).json({ "success": false, "message": "Invalid access to admin feature" });
+                }
+                if (!req.files) {
+                    return res.status(400).json({ "success": false, "message": "Image is required" });
+                }
+                const avatar = req.files.avatar;
+                if (!avatar) {
+                    console.log('Error, could not upload file');
+                    return res.status(400).json({ "success": false, "message": "File is required" });
+                }
+
+
+                // Create new blob in the bucket referencing the file
+                const blob = bucket.file(avatar.name);
+
+                // Create writable stream and specifying file mimetype
+                const blobWriter = blob.createWriteStream({
+                    metadata: {
+                        contentType: avatar.mimetype,
+                    },
+                });
+
+                blobWriter.on('error', (err) => {
+                    console.log("ERROR", err)
+                    return res.status(400).json({ "success": false, "message": "File invalid, corrupted or greater than 10MB" });
+
+                });
+
+                blobWriter.on('finish', async () => {
+                    const downloadUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURI(blob.name)}?alt=media`;
+                    User.findOneAndUpdate({ _id: client._id }, { avatar: downloadUrl })
+                        .then((result) => {
+                            return res.status(200).json({ "success": true, "message": "User picture updated successfully" });
+                        })
+                        .catch((err) => {
+                            return res.status(400).json({ "success": false, "message": "Error updating user picture", "Error": err });
+                        });
+                });
+                blobWriter.end(avatar.data);
+            });
+        });
     }
 }

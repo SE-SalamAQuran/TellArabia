@@ -6,5 +6,5 @@ router.get("/orders", adminControllers.fetchOrders);
 router.get("/complaints", adminControllers.fetchComplaints);
 router.get("/meetings", adminControllers.fetchMeetings);
 router.get("/services", adminControllers.fetchServices);
-
+router.patch("/update/avatar", adminControllers.updatePicture);
 module.exports = router;
