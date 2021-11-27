@@ -45,19 +45,21 @@ module.exports = {
                 if (images.length === 0) {
                     return res.status(400).json({ "success": true, "message": "You must add images" })
                 }
+
                 else if (service && price && images) {
                     Sub.findOne({ name: service }, async (err, result) => {
                         if (err || !result) { return res.status(404).json({ "success": false, "message": "Service doesn't exist" }) }
                         else {
                             var urls = [];
                             // Create new blob in the bucket referencing the file
-                            images.forEach((file) => {
-                                const blob = bucket.file(file.name);
+                            if (images.length === 1) {
+                                let singleFile = images;
+                                const blob = bucket.file(singleFile.name);
 
                                 // Create writable stream and specifying file mimetype
                                 const blobWriter = blob.createWriteStream({
                                     metadata: {
-                                        contentType: file.mimetype,
+                                        contentType: singleFile.mimetype,
                                     },
                                 });
 
@@ -70,8 +72,32 @@ module.exports = {
                                     urls.push(`https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURI(blob.name)}?alt=media`);
                                 });
                                 blobWriter.emit("finish", urls);
-                                blobWriter.end(file.data);
-                            })
+                                blobWriter.end(singleFile.data);
+                            }
+                            else if (images.length > 1) {
+                                images.forEach((file) => {
+                                    const blob = bucket.file(file.name);
+
+                                    // Create writable stream and specifying file mimetype
+                                    const blobWriter = blob.createWriteStream({
+                                        metadata: {
+                                            contentType: file.mimetype,
+                                        },
+                                    });
+
+                                    blobWriter.on('error', (err) => {
+                                        console.log("ERROR", err)
+                                        return res.status(400).json({ "success": false, "message": "File invalid, corrupted or greater than 10MB" });
+
+                                    });
+                                    blobWriter.on('finish', async () => {
+                                        urls.push(`https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURI(blob.name)}?alt=media`);
+                                    });
+                                    blobWriter.emit("finish", urls);
+                                    blobWriter.end(file.data);
+                                })
+                            }
+
 
                             const newOffer = new Offer({
                                 price: price,
@@ -96,6 +122,7 @@ module.exports = {
                 }
 
                 else {
+                    console.log(service);
                     return res.status(400).json({ "success": false, "message": "Some fields are missing" })
                 }
 
