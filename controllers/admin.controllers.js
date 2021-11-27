@@ -277,5 +277,59 @@ module.exports = {
                 })
             })
         })
+    },
+    changeOrderStatus: (req, res) => {
+        let token = req.headers['authorization'];
+        jwt.verify(token, secretKey, (err, decoded) => {
+            if (err) { return res.status(403).json({ "success": false, "message": "Invalid Bearer Token" }); }
+            const client = decoded.user;
+            User.findOne({ _id: client._id }, (e, user) => {
+                if (e) { return res.status(400).json({ "success": false, "message": "Error Fetching User" }); }
+                else if (!user) {
+                    return res.status(403).json({ "success": false, "message": "User not found" });
+
+                }
+                else if (!user.is_admin) {
+                    return res.status(403).json({ "success": false, "message": "Invalid access to admin feature" });
+                }
+                const orderId = req.body.order;
+                const status = req.body.status;
+                if (!orderId || !status) {
+
+                    return res.status(400).json({ "success": false, "message": "Some fields are missing" });
+                }
+                Order.findOneAndUpdate({ _id: orderId }, { status: status }, (e, done) => {
+                    if (e || !done) { return res.status(400).json({ "success": false, "message": "Unable to update order status" }) }
+                    return res.status(200).json({ "success": true, "message": `Order status updated successfully to ${status}` });
+                });
+            });
+        })
+    },
+
+    changeComplaintStatus: (req, res) => {
+        let token = req.headers['authorization'];
+        jwt.verify(token, secretKey, (err, decoded) => {
+            if (err) { return res.status(403).json({ "success": false, "message": "Invalid Bearer Token" }); }
+            const client = decoded.user;
+            User.findOne({ _id: client._id }, (e, user) => {
+                if (e) { return res.status(400).json({ "success": false, "message": "Error Fetching User" }); }
+                else if (!user) {
+                    return res.status(403).json({ "success": false, "message": "User not found" });
+
+                }
+                else if (!user.is_admin) {
+                    return res.status(403).json({ "success": false, "message": "Invalid access to admin feature" });
+                }
+                const complaintId = req.body.complaint;
+                const status = req.body.status;
+                if (!complaintId || !status) {
+                    return res.status(400).json({ "success": false, "message": "Some fields are missing" });
+                }
+                Complaint.findOneAndUpdate({ _id: complaintId }, { status: status }, (e, done) => {
+                    if (e) { return res.status(400).json({ "success": false, "message": "Unable to update complaint status" }) }
+                    return res.status(200).json({ "success": true, "message": `Complaint status updated successfully to ${status}` });
+                });
+            });
+        })
     }
 }

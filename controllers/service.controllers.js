@@ -269,7 +269,7 @@ module.exports = {
                                             //Filtered names of main category to find it's lookups
                                             let filteredServiceName = main.toLowerCase().split(' ').join('_') + '_services';
 
-                                            Lookup.findOneAndUpdate({ classification: filteredServiceName }, { $addToSet: { values: sub.name } })
+                                            Lookup.findOneAndUpdate({ classification: filteredServiceName }, { $addToSet: { values: sub } })
                                                 .then(() => {
                                                     console.log(`Lookup updated for this service ${main}`);
                                                 })
