@@ -331,5 +331,61 @@ module.exports = {
                 });
             });
         })
+    },
+
+    getStudents: (req, res) => {
+        let token = req.headers['authorization'];
+        jwt.verify(token, secretKey, (err, decoded) => {
+            if (err) { return res.status(403).json({ "success": false, "message": "Invalid Bearer Token" }); }
+            const client = decoded.user;
+            User.findOne({ _id: client._id }, (e, user) => {
+                if (e) { return res.status(400).json({ "success": false, "message": "Error Fetching User" }); }
+                else if (!user) {
+                    return res.status(403).json({ "success": false, "message": "User not found" });
+
+                }
+                else if (!user.is_admin) {
+                    return res.status(403).json({ "success": false, "message": "Invalid access to admin feature" });
+                }
+                Student.find({}, (error, result) => {
+                    if (error) {
+                        return res.status(400).json({ "success": false, "message": "Unable to fetch students" });
+                    }
+                    return res.status(200).json({ "success": true, "students": result });
+                }).select("-__v -updatedAt -createdAt -orders").populate({ path: "complaints", select: "-__v -updatedAt -createdAt" }).populate({ path: "userInfo", select: "-__v -updatedAt -createdAt" });
+            });
+        })
+    },
+    addPointsToStudent: (req, res) => {
+        let token = req.headers['authorization'];
+        jwt.verify(token, secretKey, (err, decoded) => {
+            if (err) { return res.status(403).json({ "success": false, "message": "Invalid Bearer Token" }); }
+            const client = decoded.user;
+            User.findOne({ _id: client._id }, (e, user) => {
+                if (e) { return res.status(400).json({ "success": false, "message": "Error Fetching User" }); }
+                else if (!user) {
+                    return res.status(403).json({ "success": false, "message": "User not found" });
+
+                }
+                else if (!user.is_admin) {
+                    return res.status(403).json({ "success": false, "message": "Invalid access to admin feature" });
+                }
+                const student = req.body.studentID;
+                //pts: points that admin wishes to add to the student
+                const pts = req.body.points;
+
+                if (!student || !pts) {
+                    return res.status(400).json({ "success": false, "message": "Student ID and points must be provided" });
+                }
+
+
+                Student.findOneAndUpdate({ _id: student }, { $inc: { points: pts } }, (error, result) => {
+                    if (error) {
+                        return res.status(400).json({ "success": false, "message": "Unable to fetch students" });
+                    }
+                    return res.status(200).json({ "success": true, "message": "Student Points updated" });
+                });
+            });
+        })
     }
 }

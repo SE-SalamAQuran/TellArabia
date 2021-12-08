@@ -4,6 +4,7 @@ const userControllers = require("../controllers/user.controllers");
 router.get('/complaints/all', userControllers.getComplaints);
 router.get('/profile', userControllers.profile);
 router.get('/orders/all', userControllers.getOrdersList);
+router.get('/student/details', userControllers.getStudentDetails);
 router.post('/find_user', userControllers.findUser);
 router.post('/orders/new', userControllers.newOrder);
 router.post('/complaints/new', userControllers.addComplaint);

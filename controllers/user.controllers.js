@@ -381,5 +381,19 @@ module.exports = {
                     .catch(() => { return res.status(400).json({ "success": false, "message": "Please fill all fields" }) });
             })
         })
+    },
+    getStudentDetails: (req, res) => {
+        let token = req.headers['authorization'];
+        jwt.verify(token, secretKey, (err, decoded) => {
+            if (err || !decoded) {
+                return res.status(401).json({ "success": false, "message": "Invalid Access Token" });
+            }
+            Student.findOne({ userInfo: decoded.user._id }, (e, student) => {
+                if (e) {
+                    return res.status(400).json({ "success": false, "message": "Unable to fetch student data" });
+                }
+                return res.status(200).json({ "success": true, "student": student });
+            }).select("-__v -createdAt -updatedAt -userInfo")
+        })
     }
 }

@@ -36,6 +36,10 @@ const studentSchema = new Schema({
         type: [mongoose.Types.ObjectId],
         ref: "Complaint",
         default: []
+    },
+    points: {
+        type: Number,
+        default: 0
     }
 
 }, { timestamps: true })
