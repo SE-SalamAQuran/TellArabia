@@ -377,14 +377,25 @@ module.exports = {
                 if (!student || !pts) {
                     return res.status(400).json({ "success": false, "message": "Student ID and points must be provided" });
                 }
-
-
-                Student.findOneAndUpdate({ _id: student }, { $inc: { points: pts } }, (error, result) => {
-                    if (error) {
-                        return res.status(400).json({ "success": false, "message": "Unable to fetch students" });
+                Student.findOne({ _id: student }, (e, result) => {
+                    if (e) {
+                        console.log("Student Not Found");
                     }
-                    return res.status(200).json({ "success": true, "message": "Student Points updated" });
-                });
+                    else if (pts < 0 && result['points'] === 0) {
+                        return res.status(400).json({ "success": false, "message": "A student cannot have negative points" });
+                    }
+                    else {
+                        Student.findOneAndUpdate({ _id: student }, { $inc: { points: pts } }, (error, result) => {
+                            if (error) {
+                                return res.status(400).json({ "success": false, "message": "Unable to update points" });
+                            }
+                            return res.status(200).json({ "success": true, "message": "Student Points updated" });
+                        });
+                    }
+                })
+
+
+
             });
         })
     }
